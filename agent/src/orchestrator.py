@@ -27,7 +27,7 @@ from claude_agent_sdk import (
     query,
 )
 
-from . import loaders, prompts, scoring
+from . import db, loaders, prompts, scoring
 from .events import AuditEvent, EventBus
 from .tools import build_research_server
 
@@ -340,8 +340,15 @@ async def run_audit(
 ) -> dict[str, Any]:
     """Top-level pipeline."""
     try:
+        # Create persistent session row in Supabase (no-ops if not configured)
+        session_id = db.create_session(
+            company_url=url,
+            company_name=company_name,
+            screener=screener,
+        )
         await bus.emit(AuditEvent(type="pipeline.start", agent="orchestrator", data={
             "company_name": company_name, "url": url,
+            "session_id": session_id,
         }))
 
         # Phase 1: Research
@@ -392,7 +399,18 @@ async def run_audit(
         )
         merged_answers, scorecard = merged_and_final
 
+        # Persist scraped phase output
+        db.update_scraped(
+            session_id=session_id or "",
+            evidence=evidence,
+            answers=merged_answers,
+            scorecard=scorecard,
+            narrative=narrative,
+            value_chain_plays=value_chain_plays,
+        )
+
         result = {
+            "session_id": session_id,
             "company_name": company_name,
             "url": url,
             "screener": screener,
@@ -404,6 +422,7 @@ async def run_audit(
         }
         await bus.emit(AuditEvent(type="pipeline.complete", agent="orchestrator", data={
             "overall_score": scorecard["overall_score"],
+            "session_id": session_id,
         }))
         return result
     except Exception as e:

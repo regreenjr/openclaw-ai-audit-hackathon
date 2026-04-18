@@ -1,0 +1,277 @@
+{
+  "screener": [
+    {
+      "id": "Q0",
+      "field": "industry",
+      "type": "text",
+      "label": "What industry are you in?",
+      "help": "Free text. Used to personalize wording in later questions and the final report."
+    },
+    {
+      "id": "Q1",
+      "field": "size",
+      "type": "select",
+      "label": "How many employees does your company have?",
+      "options": ["Fewer than 10", "10-50", "51-250", "251-1000", "More than 1000"]
+    },
+    {
+      "id": "Q2",
+      "field": "role",
+      "type": "select",
+      "label": "What is your role?",
+      "options": ["Owner / CEO", "COO / Operations lead", "CIO / CTO / IT lead", "Department head", "Other"]
+    },
+    {
+      "id": "Q3",
+      "field": "priority_function",
+      "type": "text",
+      "label": "If AI fixed one thing this year, what would create the most value?",
+      "help": "Free text. A single function, workflow, or outcome. This becomes the focus of your report."
+    }
+  ],
+  "scored": [
+    {
+      "id": "Q4",
+      "dimension": "D1",
+      "stem": "How would you describe your organization's AI strategy?",
+      "options": [
+        { "level": 1, "text": "We don't have one; AI comes up reactively" },
+        { "level": 2, "text": "Exploring a few pilot ideas informally" },
+        { "level": 3, "text": "Documented AI roadmap with executive sponsorship" },
+        { "level": 4, "text": "AI is central to strategy, reviewed at board level" },
+        { "level": 1, "text": "Don't know / Not sure", "flag": "discovery_needed" }
+      ]
+    },
+    {
+      "id": "Q5",
+      "dimension": "D1",
+      "stem": "Who owns AI decisions at your company?",
+      "options": [
+        { "level": 1, "text": "No one specifically" },
+        { "level": 2, "text": "Scattered champions across teams" },
+        { "level": 3, "text": "A designated leader or cross-functional committee" },
+        { "level": 4, "text": "A C-level executive with a funded team" },
+        { "level": 1, "text": "Don't know / Not sure", "flag": "discovery_needed" }
+      ]
+    },
+    {
+      "id": "Q6",
+      "dimension": "D1",
+      "stem": "How is AI investment prioritized?",
+      "options": [
+        { "level": 1, "text": "It isn't; spend is ad-hoc" },
+        { "level": 2, "text": "Case-by-case, often bottom-up" },
+        { "level": 3, "text": "Prioritized annually against clear criteria" },
+        { "level": 4, "text": "Continuously rebalanced as a portfolio" },
+        { "level": 1, "text": "Don't know / Not sure", "flag": "discovery_needed" }
+      ]
+    },
+    {
+      "id": "Q7",
+      "dimension": "D1",
+      "stem": "How does leadership measure AI success?",
+      "options": [
+        { "level": 1, "text": "We don't measure" },
+        { "level": 2, "text": "Anecdotally or qualitatively" },
+        { "level": 3, "text": "KPIs tied to specific projects (ROI, time saved)" },
+        { "level": 4, "text": "Contribution to enterprise OKRs and shareholder value" },
+        { "level": 1, "text": "Don't know / Not sure", "flag": "discovery_needed" }
+      ]
+    },
+    {
+      "id": "Q8",
+      "dimension": "D2",
+      "stem": "How is your business data organized?",
+      "options": [
+        { "level": 1, "text": "Spreadsheets and email; fragmented" },
+        { "level": 2, "text": "Systems of record exist but are siloed" },
+        { "level": 3, "text": "Centralized warehouse or lake, with governance" },
+        { "level": 4, "text": "Unified, real-time, ML-ready platform" },
+        { "level": 1, "text": "Don't know / Not sure", "flag": "discovery_needed" }
+      ]
+    },
+    {
+      "id": "Q9",
+      "dimension": "D2",
+      "stem": "How well do your business systems integrate?",
+      "options": [
+        { "level": 1, "text": "Little or no integration; manual transfer" },
+        { "level": 2, "text": "Brittle point-to-point integrations" },
+        { "level": 3, "text": "APIs and standardized integrations" },
+        { "level": 4, "text": "Event-driven architecture, fully composable" },
+        { "level": 1, "text": "Don't know / Not sure", "flag": "discovery_needed" }
+      ]
+    },
+    {
+      "id": "Q10",
+      "dimension": "D2",
+      "stem": "How would you rate your data quality?",
+      "options": [
+        { "level": 1, "text": "Unknown or poor" },
+        { "level": 2, "text": "Mixed; known issues but no remediation plan" },
+        { "level": 3, "text": "Monitored, with owners and standards" },
+        { "level": 4, "text": "Continuously validated, with data contracts and lineage" },
+        { "level": 1, "text": "Don't know / Not sure", "flag": "discovery_needed" }
+      ]
+    },
+    {
+      "id": "Q11",
+      "dimension": "D2",
+      "stem": "What is your cloud and compute readiness for AI workloads?",
+      "options": [
+        { "level": 1, "text": "On-prem or consumer tools only" },
+        { "level": 2, "text": "Some SaaS, limited cloud" },
+        { "level": 3, "text": "Cloud-first with governed accounts" },
+        { "level": 4, "text": "Multi-cloud, optimized for AI/ML workloads" },
+        { "level": 1, "text": "Don't know / Not sure", "flag": "discovery_needed" }
+      ]
+    },
+    {
+      "id": "Q12",
+      "dimension": "D3",
+      "stem": "How AI-literate is your overall workforce?",
+      "options": [
+        { "level": 1, "text": "Very limited; most staff have not used AI tools" },
+        { "level": 2, "text": "A few early adopters using tools individually" },
+        { "level": 3, "text": "Most teams trained on AI fundamentals" },
+        { "level": 4, "text": "AI fluency is a baseline expectation org-wide" },
+        { "level": 1, "text": "Don't know / Not sure", "flag": "discovery_needed" }
+      ]
+    },
+    {
+      "id": "Q13",
+      "dimension": "D3",
+      "stem": "What AI training or enablement do you provide?",
+      "options": [
+        { "level": 1, "text": "None" },
+        { "level": 2, "text": "Ad-hoc self-learning, some sharing" },
+        { "level": 3, "text": "Structured training programs by role" },
+        { "level": 4, "text": "Continuous learning with certifications and internal comms" },
+        { "level": 1, "text": "Don't know / Not sure", "flag": "discovery_needed" }
+      ]
+    },
+    {
+      "id": "Q14",
+      "dimension": "D3",
+      "stem": "Do you have dedicated AI, data, or ML talent in-house?",
+      "options": [
+        { "level": 1, "text": "No" },
+        { "level": 2, "text": "Some individuals wearing multiple hats" },
+        { "level": 3, "text": "A small team or clear ownership" },
+        { "level": 4, "text": "A scaled function with specialized roles" },
+        { "level": 1, "text": "Don't know / Not sure", "flag": "discovery_needed" }
+      ]
+    },
+    {
+      "id": "Q15",
+      "dimension": "D3",
+      "stem": "How are teams encouraged to experiment with AI (particularly around {{priority_function}})?",
+      "personalize": ["priority_function"],
+      "options": [
+        { "level": 1, "text": "No encouragement or guidance" },
+        { "level": 2, "text": "Individuals experiment on their own" },
+        { "level": 3, "text": "Sandbox tools, approved vendors, allocated time" },
+        { "level": 4, "text": "Innovation budget, internal hackathons, scaling pathways" },
+        { "level": 1, "text": "Don't know / Not sure", "flag": "discovery_needed" }
+      ]
+    },
+    {
+      "id": "Q16",
+      "dimension": "D4",
+      "stem": "Do you have written AI usage policies?",
+      "options": [
+        { "level": 1, "text": "No" },
+        { "level": 2, "text": "Informal guidelines or a memo" },
+        { "level": 3, "text": "Formal policy covering acceptable use, data, vendors" },
+        { "level": 4, "text": "Living policy with training, audits, and enforcement" },
+        { "level": 1, "text": "Don't know / Not sure", "flag": "discovery_needed" }
+      ]
+    },
+    {
+      "id": "Q17",
+      "dimension": "D4",
+      "stem": "How do you evaluate third-party AI vendors or tools?",
+      "options": [
+        { "level": 1, "text": "We don't" },
+        { "level": 2, "text": "Per-team, ad-hoc" },
+        { "level": 3, "text": "Security and procurement review process" },
+        { "level": 4, "text": "Vendor risk program with AI-specific criteria (bias, data handling, model provenance)" },
+        { "level": 1, "text": "Don't know / Not sure", "flag": "discovery_needed" }
+      ]
+    },
+    {
+      "id": "Q18",
+      "dimension": "D4",
+      "stem": "How do you manage AI-related risks (privacy, accuracy, bias)?",
+      "options": [
+        { "level": 1, "text": "Not addressed" },
+        { "level": 2, "text": "Handled reactively when issues arise" },
+        { "level": 3, "text": "Risks assessed before deployment, documented" },
+        { "level": 4, "text": "Continuous monitoring, red-teaming, model review board" },
+        { "level": 1, "text": "Don't know / Not sure", "flag": "discovery_needed" }
+      ]
+    },
+    {
+      "id": "Q19",
+      "dimension": "D4",
+      "stem": "How does AI use intersect with your compliance obligations (in {{industry}})?",
+      "personalize": ["industry"],
+      "options": [
+        { "level": 1, "text": "Not considered" },
+        { "level": 2, "text": "Awareness but no action" },
+        { "level": 3, "text": "Mapped to specific regulations, reviewed by legal" },
+        { "level": 4, "text": "Compliance automated and auditable; proactive regulator engagement" },
+        { "level": 1, "text": "Don't know / Not sure", "flag": "discovery_needed" }
+      ]
+    },
+    {
+      "id": "Q20",
+      "dimension": "D5",
+      "stem": "How many AI-powered workflows or features do you have in production today?",
+      "options": [
+        { "level": 1, "text": "None" },
+        { "level": 2, "text": "1-2 pilots or experiments" },
+        { "level": 3, "text": "Several across multiple departments" },
+        { "level": 4, "text": "Dozens, with a portfolio-level view" },
+        { "level": 1, "text": "Don't know / Not sure", "flag": "discovery_needed" }
+      ]
+    },
+    {
+      "id": "Q21",
+      "dimension": "D5",
+      "stem": "How do you decide which AI use cases to pursue?",
+      "options": [
+        { "level": 1, "text": "We don't" },
+        { "level": 2, "text": "Whatever sounds interesting at the time" },
+        { "level": 3, "text": "Framework balancing value and feasibility" },
+        { "level": 4, "text": "Strategic portfolio aligned to business outcomes" },
+        { "level": 1, "text": "Don't know / Not sure", "flag": "discovery_needed" }
+      ]
+    },
+    {
+      "id": "Q22",
+      "dimension": "D5",
+      "stem": "How do you measure ROI of AI initiatives?",
+      "options": [
+        { "level": 1, "text": "We don't" },
+        { "level": 2, "text": "Estimates after the fact" },
+        { "level": 3, "text": "Pre/post baselines per project" },
+        { "level": 4, "text": "Continuous value tracking in finance systems" },
+        { "level": 1, "text": "Don't know / Not sure", "flag": "discovery_needed" }
+      ]
+    },
+    {
+      "id": "Q23",
+      "dimension": "D5",
+      "stem": "When a pilot succeeds, how do you scale it (particularly around {{priority_function}})?",
+      "personalize": ["priority_function"],
+      "options": [
+        { "level": 1, "text": "We haven't tried" },
+        { "level": 2, "text": "Case-by-case, often stalls" },
+        { "level": 3, "text": "Documented productionization path" },
+        { "level": 4, "text": "Standard scaling playbook, operational handoff, continuous optimization" },
+        { "level": 1, "text": "Don't know / Not sure", "flag": "discovery_needed" }
+      ]
+    }
+  ]
+}

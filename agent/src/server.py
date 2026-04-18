@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse
 
-from . import orchestrator
+from . import db, orchestrator
 from .events import EventBus
 
 load_dotenv()
@@ -46,7 +46,31 @@ async def health() -> dict[str, Any]:
         "status": "ok",
         "service": "openclaw-audit-agent",
         "has_api_key": bool(os.getenv("ANTHROPIC_API_KEY")),
+        "db_enabled": db.is_enabled(),
     }
+
+
+class QuizSubmission(BaseModel):
+    """User self-assessment answers. Shape: {Q4: 3, Q5: 2, ...} — level per question."""
+    answers: dict[str, int]
+    contextual: dict[str, Any] = Field(default_factory=dict)
+
+
+@app.get("/api/session/{session_id}")
+async def get_session(session_id: str) -> dict[str, Any]:
+    s = db.get_session(session_id)
+    if not s:
+        return {"error": "session not found", "session_id": session_id}
+    return s
+
+
+@app.post("/api/quiz/{session_id}")
+async def submit_quiz(session_id: str, submission: QuizSubmission) -> dict[str, Any]:
+    """Persist user quiz answers. Returns session_id so the frontend can redirect to /report/{id}."""
+    ok = db.update_quiz(session_id, submission.answers)
+    if not ok:
+        return {"error": "failed to save quiz", "session_id": session_id}
+    return {"session_id": session_id, "status": "quizzed"}
 
 
 @app.get("/")

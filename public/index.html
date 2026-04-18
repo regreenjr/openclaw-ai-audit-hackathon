@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Openclaw AI Maturity Audit</title>
+    <title>Gapstone — AI Maturity Audit</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0a0a0a; color: #ededed; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
@@ -105,11 +105,11 @@
     <!-- HERO -->
     <div id="hero" class="w-full max-w-3xl text-center space-y-6 mt-20 transition-opacity duration-500">
         <div class="inline-block px-3 py-1 rounded-full border border-gray-700 bg-gray-900 text-xs font-medium tracking-wide text-gray-400 uppercase">
-            Openclaw Hackathon · Multi-Agent Audit
+            Gapstone · Multi-Agent AI Audit
         </div>
-        <h1 class="text-5xl md:text-7xl font-bold tracking-tight gradient-text">AI Maturity Audit</h1>
+        <h1 class="text-5xl md:text-7xl font-bold tracking-tight gradient-text">Gapstone</h1>
         <p class="text-xl text-gray-400 max-w-2xl mx-auto">
-            Drop your URL. A swarm of Claude sub-agents scrapes your public footprint, predicts your maturity across 20 questions with cited evidence, and maps a 90-day roadmap — in 60 seconds.
+            Drop your URL. A swarm of Claude sub-agents scrapes your public footprint and predicts your AI maturity. Then take a 2-minute self-assessment and we'll fuse both signals into a 90-day roadmap.
         </p>
 
         <form id="auditForm" class="mt-8 space-y-4 max-w-xl mx-auto text-left">
@@ -243,7 +243,25 @@
             <pre class="mt-4 text-xs text-gray-500 overflow-x-auto" id="evidenceJson"></pre>
         </details>
 
-        <!-- CTA -->
+        <!-- CONTINUE TO SELF-ASSESSMENT CTA -->
+        <div id="continueToQuizPanel" class="mt-8 glass-panel p-8 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-sky-500/10 to-fuchsia-500/10 border-emerald-500/20 fade-in">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex-1">
+                    <div class="text-xs uppercase tracking-widest text-emerald-300 mb-2">Next step · 2 minutes</div>
+                    <h3 class="text-2xl font-bold text-white mb-2">Confirm or correct the agents' 20 predictions</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        The agents just predicted your maturity from public signals alone. Review them below —
+                        especially anywhere we flagged <span class="text-amber-300">discovery needed</span> — and we'll fuse your answers with the scraped evidence into a definitive combined report.
+                    </p>
+                </div>
+                <button type="button" id="continueToQuizBtn" class="shrink-0 inline-flex items-center gap-2 bg-white text-black font-semibold text-lg px-8 py-4 rounded-xl hover:scale-105 transition-transform shadow-[0_0_40px_rgba(255,255,255,0.3)]">
+                    <span>Continue to Self-Assessment</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- CTA (Book + PDF) -->
         <div class="mt-12 text-center glass-panel p-12 rounded-2xl bg-gradient-to-b from-white/5 to-transparent border-t border-white/20">
             <h2 class="text-3xl font-bold text-white mb-3">Close the Gap.</h2>
             <p class="text-gray-400 mb-8 max-w-xl mx-auto">Book a 30-minute call with an AI integration expert to turn these gaps into a funded, prioritized roadmap.</p>
@@ -256,6 +274,46 @@
                     Download PDF
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- SELF-ASSESSMENT / QUIZ VIEW -->
+    <div id="quizView" class="hidden w-full max-w-4xl mt-12 space-y-6">
+        <div class="text-center space-y-3 mb-4">
+            <div class="inline-block px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-xs font-medium tracking-wide text-emerald-300 uppercase">
+                Step 2 of 2 · Self-Assessment
+            </div>
+            <h2 class="text-4xl font-bold">Confirm the agents' answers</h2>
+            <p class="text-gray-400 max-w-2xl mx-auto text-sm leading-relaxed">
+                Our agents pre-filled predictions from your public footprint. Green checks = strong evidence. Amber = suggested. Empty = discovery needed. Override anything we got wrong.
+            </p>
+            <div class="flex items-center justify-center gap-4 pt-2">
+                <span id="quizProgressText" class="text-sm text-gray-400">0 / 20 answered</span>
+                <div class="w-56 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                    <div id="quizProgressBar" class="h-1.5 bg-emerald-400 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Painful workflow -->
+        <div class="glass-panel p-6 rounded-2xl">
+            <label class="text-xs uppercase tracking-wider text-gray-400">What's the most painful workflow you'd want AI to fix?</label>
+            <input type="text" id="painfulWorkflow" placeholder="e.g. client document intake and tax preparation"
+                   class="mt-2 w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-white" />
+            <p class="mt-2 text-xs text-gray-500">Pre-filled from your initial priority function if you provided one.</p>
+        </div>
+
+        <!-- Quiz questions render here, grouped by dimension -->
+        <div id="quizQuestions" class="space-y-6"></div>
+
+        <!-- Submit -->
+        <div class="pt-6 text-center space-y-3">
+            <button type="button" id="quizSubmitBtn" disabled
+                class="inline-flex items-center gap-3 bg-white text-black font-bold text-xl px-10 py-5 rounded-xl hover:scale-105 transition-transform shadow-[0_0_40px_rgba(255,255,255,0.3)] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100">
+                <span>Generate Combined Report</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+            </button>
+            <p id="quizSubmitHint" class="text-xs text-gray-500">Answer all 20 questions to enable the submit button.</p>
         </div>
     </div>
 
@@ -401,12 +459,21 @@
     }
 
     let totalCost = 0;
+    // Session state for the self-assessment flow
+    let currentSessionId = null;
+    let scrapedAnswers = {};      // { Q4: { level, confidence, discovery_needed, stem, ... }, ... }
+    let currentScreener = {};     // industry, priority_function, etc — remembered for quiz pre-fill
+    let questionsData = null;     // loaded lazily from /questions.json when user enters quiz
 
     function handleEvent(ev) {
         const { type, agent, data } = ev;
 
         if (type === 'pipeline.start') {
             phaseLabel.textContent = `Auditing ${data.company_name}...`;
+            if (data.session_id) {
+                currentSessionId = data.session_id;
+                console.log('[gapstone] session_id:', currentSessionId);
+            }
             termLine(`> orchestrator: starting audit for ${data.company_name} (${data.url})`, 'text-emerald-400');
         }
         else if (type === 'pipeline.phase') {
@@ -450,8 +517,16 @@
         else if (type === 'value_chain') {
             renderValueChain(data.plays || []);
         }
+        else if (type === 'specialist.result') {
+            // Cache specialist's per-question predictions (with confidence) for the quiz pre-fill
+            const ans = data && data.answers ? data.answers : {};
+            for (const qid of Object.keys(ans)) {
+                scrapedAnswers[qid] = { ...(scrapedAnswers[qid] || {}), ...ans[qid] };
+            }
+        }
         else if (type === 'pipeline.complete') {
             termLine(`> complete — overall maturity ${data.overall_score}/4.0`, 'text-emerald-400');
+            if (data.session_id) currentSessionId = data.session_id;
             results.classList.remove('hidden');
             results.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
@@ -652,6 +727,10 @@
         totalCost = 0;
         liveCost.textContent = '';
 
+        // Remember screener for quiz pre-fill
+        currentScreener = { industry, size, role: 'COO / Operations lead', priority_function: priorityFunction };
+        scrapedAnswers = {};  // fresh run, clear any prior answers
+
         try {
             await streamAudit({
                 companyUrl: url,
@@ -664,6 +743,215 @@
             submitBtn.disabled = false;
             submitBtn.innerHTML = 'Try Again';
         }
+    });
+
+    // =========================================================================
+    // SELF-ASSESSMENT / QUIZ VIEW
+    // =========================================================================
+    const DIM_NAMES = {
+        D1: "Strategy & Leadership", D2: "Data & Infrastructure",
+        D3: "People & Skills",       D4: "Governance & Risk",
+        D5: "Use Cases & Adoption",
+    };
+    const DIM_EMOJIS = { D1: '🎯', D2: '💾', D3: '👥', D4: '⚖️', D5: '🚀' };
+
+    async function loadQuestions() {
+        if (questionsData) return questionsData;
+        const r = await fetch('/questions.json');
+        if (!r.ok) throw new Error(`questions.json load failed: ${r.status}`);
+        questionsData = await r.json();
+        return questionsData;
+    }
+
+    async function hydrateScrapedAnswersFromServer() {
+        // Fallback when specialist.result events didn't fully populate (e.g. page reload)
+        if (!currentSessionId || !API_URL) return;
+        try {
+            const r = await fetch(`${API_URL}/api/session/${currentSessionId}`);
+            if (!r.ok) return;
+            const sess = await r.json();
+            const serverAnswers = sess && sess.scraped_answers;
+            if (serverAnswers && typeof serverAnswers === 'object') {
+                for (const qid of Object.keys(serverAnswers)) {
+                    if (!scrapedAnswers[qid]) scrapedAnswers[qid] = serverAnswers[qid];
+                }
+            }
+        } catch (e) {
+            console.warn('[gapstone] hydrate failed', e);
+        }
+    }
+
+    async function showQuizView() {
+        if (!currentSessionId) {
+            alert('No session found. Re-run the audit to continue.');
+            return;
+        }
+        await loadQuestions();
+        await hydrateScrapedAnswersFromServer();
+
+        // Hide results, show quiz
+        document.getElementById('results').classList.add('hidden');
+        const quizView = document.getElementById('quizView');
+        quizView.classList.remove('hidden');
+        quizView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // Pre-fill painful_workflow from priority_function
+        const pw = document.getElementById('painfulWorkflow');
+        if (currentScreener.priority_function && currentScreener.priority_function !== 'unknown' && !pw.value) {
+            pw.value = currentScreener.priority_function;
+        }
+
+        renderQuiz();
+    }
+
+    function renderQuiz() {
+        const container = document.getElementById('quizQuestions');
+        container.innerHTML = '';
+        const byDim = {};
+        for (const q of questionsData.scored) {
+            (byDim[q.dimension] = byDim[q.dimension] || []).push(q);
+        }
+        for (const dim of ['D1','D2','D3','D4','D5']) {
+            const qs = byDim[dim] || [];
+            const dimCard = document.createElement('div');
+            dimCard.className = 'glass-panel p-6 rounded-2xl fade-in';
+            dimCard.innerHTML = `
+                <div class="flex items-center gap-3 mb-4 pb-3 border-b border-gray-800">
+                    <span class="text-2xl">${DIM_EMOJIS[dim]}</span>
+                    <div>
+                        <h3 class="text-lg font-semibold">${dim} · ${DIM_NAMES[dim]}</h3>
+                        <p class="text-xs text-gray-500">${qs.length} questions</p>
+                    </div>
+                </div>
+                <div class="space-y-6 quiz-dim-questions" data-dim="${dim}"></div>
+            `;
+            container.appendChild(dimCard);
+            const inner = dimCard.querySelector('.quiz-dim-questions');
+            for (const q of qs) inner.appendChild(renderQuestion(q));
+        }
+        updateQuizProgress();
+    }
+
+    function renderQuestion(q) {
+        const scraped = scrapedAnswers[q.id] || {};
+        const predictedLevel = scraped.level;
+        const confidence = scraped.confidence || 0;
+        const discoveryNeeded = !!scraped.discovery_needed;
+
+        let badge = '';
+        if (discoveryNeeded) {
+            badge = '<span class="text-[10px] px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded border border-amber-500/30">⚠ discovery needed — please answer</span>';
+        } else if (confidence >= 0.8 && predictedLevel) {
+            badge = `<span class="text-[10px] px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30">✓ pre-filled · ${Math.round(confidence * 100)}% confidence</span>`;
+        } else if (confidence >= 0.5 && predictedLevel) {
+            badge = `<span class="text-[10px] px-2 py-0.5 bg-sky-500/20 text-sky-300 rounded border border-sky-500/30">suggested · ${Math.round(confidence * 100)}% confidence</span>`;
+        }
+
+        const mainOptions = q.options.filter(o => !o.flag);
+        const wrap = document.createElement('div');
+        wrap.innerHTML = `
+            <div class="flex items-start gap-3">
+                <span class="text-xs text-gray-500 font-mono pt-0.5 shrink-0">${q.id}</span>
+                <div class="flex-1 min-w-0">
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                        <p class="font-medium text-white">${q.stem.replace(/\{\{[^}]+\}\}/g, (m) => {
+                            const key = m.slice(2,-2);
+                            return currentScreener[key] || m;
+                        })}</p>
+                        ${badge}
+                    </div>
+                    <div class="space-y-1 quiz-options" data-qid="${q.id}">
+                        ${mainOptions.map(opt => {
+                            const checked = (!discoveryNeeded && predictedLevel === opt.level) ? 'checked' : '';
+                            return `
+                                <label class="flex items-start gap-3 p-2 rounded hover:bg-white/5 cursor-pointer transition-colors">
+                                    <input type="radio" name="${q.id}" value="${opt.level}" ${checked} class="mt-1 accent-emerald-400" />
+                                    <span class="text-sm flex-1"><span class="text-gray-500 font-mono mr-2">L${opt.level}</span><span class="text-gray-300">${opt.text}</span></span>
+                                </label>
+                            `;
+                        }).join('')}
+                        <label class="flex items-start gap-3 p-2 rounded hover:bg-white/5 cursor-pointer transition-colors">
+                            <input type="radio" name="${q.id}" value="0" class="mt-1 accent-amber-400" />
+                            <span class="text-sm text-gray-400 italic flex-1">Don't know / Not sure</span>
+                        </label>
+                    </div>
+                    ${scraped.evidence && scraped.evidence.length ? `
+                        <details class="mt-2">
+                            <summary class="cursor-pointer text-xs text-gray-500 hover:text-gray-300">${scraped.evidence.length} piece${scraped.evidence.length>1?'s':''} of evidence from agents</summary>
+                            <ul class="mt-2 space-y-1 text-xs text-gray-400 pl-4 border-l border-gray-800">${scraped.evidence.map(e => `<li>· ${e}</li>`).join('')}</ul>
+                        </details>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        wrap.querySelectorAll('input[type=radio]').forEach(r => {
+            r.addEventListener('change', updateQuizProgress);
+        });
+        return wrap;
+    }
+
+    function updateQuizProgress() {
+        const total = (questionsData && questionsData.scored ? questionsData.scored.length : 20);
+        const answered = document.querySelectorAll('#quizQuestions input[type=radio]:checked').length;
+        document.getElementById('quizProgressText').textContent = `${answered} / ${total} answered`;
+        document.getElementById('quizProgressBar').style.width = `${(answered / total) * 100}%`;
+        const btn = document.getElementById('quizSubmitBtn');
+        const hint = document.getElementById('quizSubmitHint');
+        if (answered >= total) {
+            btn.disabled = false;
+            hint.textContent = 'All questions answered. Generate your combined report.';
+        } else {
+            btn.disabled = true;
+            hint.textContent = `Answer all ${total} questions to enable submit. ${total - answered} remaining.`;
+        }
+    }
+
+    async function submitQuiz() {
+        const btn = document.getElementById('quizSubmitBtn');
+        if (btn.disabled || !currentSessionId) return;
+        const answers = {};
+        document.querySelectorAll('#quizQuestions input[type=radio]:checked').forEach(r => {
+            answers[r.name] = parseInt(r.value, 10);
+        });
+        const painfulWorkflow = document.getElementById('painfulWorkflow').value.trim();
+
+        btn.disabled = true;
+        btn.innerHTML = '<div class="loader"></div><span>Saving...</span>';
+        try {
+            const r = await fetch(`${API_URL}/api/quiz/${currentSessionId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ answers, contextual: { painful_workflow: painfulWorkflow } }),
+            });
+            const out = await r.json();
+            if (out.error) throw new Error(out.error);
+            // Success splash — combined-report generation will replace this in Chunk H
+            document.getElementById('quizView').innerHTML = `
+                <div class="glass-panel p-12 rounded-2xl text-center">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 mb-4">
+                        <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <h2 class="text-3xl font-bold mb-3">Self-assessment saved</h2>
+                    <p class="text-gray-400 mb-2">Session <code class="text-xs bg-black/40 px-2 py-1 rounded">${currentSessionId.slice(0,8)}...</code></p>
+                    <p class="text-sm text-gray-500 mb-6">Combined-report generator is next (Chunk H). For now, your answers are saved in Supabase.</p>
+                    <button type="button" onclick="window.location.reload()" class="inline-flex items-center gap-2 bg-white text-black font-medium px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors">
+                        Run another audit
+                    </button>
+                </div>
+            `;
+        } catch (err) {
+            btn.disabled = false;
+            btn.innerHTML = '<span>Generate Combined Report</span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>';
+            alert('Submit failed: ' + err.message);
+        }
+    }
+
+    // Wire quiz buttons
+    document.addEventListener('DOMContentLoaded', () => {
+        const continueBtn = document.getElementById('continueToQuizBtn');
+        if (continueBtn) continueBtn.addEventListener('click', showQuizView);
+        const submitQuizBtn = document.getElementById('quizSubmitBtn');
+        if (submitQuizBtn) submitQuizBtn.addEventListener('click', submitQuiz);
     });
     </script>
 </body>
