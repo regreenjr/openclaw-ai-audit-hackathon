@@ -434,6 +434,98 @@ async def run_audit(
 
 
 # =============================================================================
+# Vendor recommendations + regulatory scan (ported from Mkal72/aiauditapp)
+# =============================================================================
+
+REGULATED_INDUSTRY_KEYWORDS = [
+    "accounting", "tax", "audit", "bookkeep", "cpa",
+    "health", "medical", "clinic", "dental", "pharma", "biotech",
+    "law", "legal", "attorney",
+    "finance", "financial", "bank", "wealth", "advisor",
+    "insurance", "broker",
+    "real estate", "mortgage", "credit",
+    "education", "school", "childcare",
+    "hr", "payroll", "benefits",
+    "government", "gov", "public sector",
+]
+
+
+def regulatory_applies(screener: dict[str, Any], scorecard: dict[str, Any]) -> bool:
+    """Gate for regulatory scan: run only when industry matches a regulated keyword
+    OR the audit surfaced a compliance-flavored gap with discovery_needed."""
+    industry = (screener.get("industry") or "").lower()
+    if any(kw in industry for kw in REGULATED_INDUSTRY_KEYWORDS):
+        return True
+    for gap in scorecard.get("top_gaps", []):
+        if gap.get("discovery_needed") and re.search(
+            r"compliance|regulat", gap.get("stem", "") or "", re.IGNORECASE
+        ):
+            return True
+    return False
+
+
+async def run_vendor_recs(
+    scorecard: dict[str, Any],
+    screener: dict[str, str],
+    contextual: dict[str, Any],
+    bus: EventBus,
+) -> dict[str, Any]:
+    system = prompts.VENDOR_RECS_SYSTEM.format(
+        industry=screener.get("industry", "unknown"),
+        size=screener.get("size", "unknown"),
+        priority_function=screener.get("priority_function", "unknown"),
+        painful_workflow=(contextual.get("painful_workflow") or "not specified")[:500],
+        top_gaps=json.dumps(scorecard.get("top_gaps", [])[:5], indent=2),
+    )
+    options = ClaudeAgentOptions(
+        system_prompt=system,
+        allowed_tools=[],
+        model=MODEL_FAST,
+        max_turns=1,
+    )
+    user_prompt = (
+        "Produce a vendor shortlist for the 2-3 most actionable gaps. "
+        "Real products only, current pricing, end with the JSON block."
+    )
+    text = await _stream_agent("vendor_recs", user_prompt, options, bus)
+    parsed = extract_json(text) or {"shortlists": []}
+    result = {"shortlists": parsed.get("shortlists", []) or []}
+    await bus.emit(AuditEvent(type="vendor_recs", agent="vendor_recs", data=result))
+    return result
+
+
+async def run_regulatory_scan(
+    screener: dict[str, str],
+    contextual: dict[str, Any],
+    bus: EventBus,
+) -> dict[str, Any]:
+    system = prompts.REGULATORY_SCAN_SYSTEM.format(
+        industry=screener.get("industry", "unknown"),
+        size=screener.get("size", "unknown"),
+        priority_function=screener.get("priority_function", "unknown"),
+        painful_workflow=(contextual.get("painful_workflow") or "not specified")[:500],
+    )
+    options = ClaudeAgentOptions(
+        system_prompt=system,
+        allowed_tools=[],
+        model=MODEL_FAST,
+        max_turns=1,
+    )
+    user_prompt = (
+        "Identify 2-6 regulations that meaningfully constrain AI use for this firm, "
+        "plus 2-5 discovery flags to raise on the expert call. End with the JSON block."
+    )
+    text = await _stream_agent("regulatory_scan", user_prompt, options, bus)
+    parsed = extract_json(text) or {"applicable_regulations": [], "discovery_flags": []}
+    result = {
+        "applicable_regulations": parsed.get("applicable_regulations", []) or [],
+        "discovery_flags": parsed.get("discovery_flags", []) or [],
+    }
+    await bus.emit(AuditEvent(type="regulatory_scan", agent="regulatory_scan", data=result))
+    return result
+
+
+# =============================================================================
 # Combined report — fuses scraped agent output with user quiz answers
 # =============================================================================
 
@@ -548,13 +640,28 @@ async def run_combined_report(session_id: str, bus: EventBus) -> dict[str, Any]:
     await bus.emit(AuditEvent(type="scorecard", agent="combiner",
                               data={**combined_scorecard, "source": "combined"}))
 
-    # Phase 3: synthesizer + value_chain in parallel using the combined scorecard
+    # Phase 3: synthesizer + value_chain + vendor_recs + (optional) regulatory_scan in parallel
+    run_regulatory = regulatory_applies(screener, combined_scorecard)
+    contextual = session.get("contextual") or {}
+    parallel_desc = "synthesizer + value_chain + vendor_recs"
+    if run_regulatory:
+        parallel_desc += " + regulatory_scan"
     await bus.emit(AuditEvent(type="combined.phase", agent="combiner",
-                              data={"phase": "synthesizer + value_chain (parallel)"}))
-    combined_narrative, combined_value_chain_plays = await asyncio.gather(
+                              data={"phase": f"{parallel_desc} (parallel)"}))
+
+    tasks = [
         run_synthesizer(combined_scorecard, merged_answers, screener, bus),
         run_value_chain_strategist(combined_scorecard, screener, {}, bus),
-    )
+        run_vendor_recs(combined_scorecard, screener, contextual, bus),
+    ]
+    if run_regulatory:
+        tasks.append(run_regulatory_scan(screener, contextual, bus))
+
+    results = await asyncio.gather(*tasks)
+    combined_narrative = results[0]
+    combined_value_chain_plays = results[1]
+    combined_vendor_recs = results[2]
+    combined_regulatory_scan = results[3] if run_regulatory else None
 
     # Phase 4: persist
     db.update_combined(
@@ -562,6 +669,8 @@ async def run_combined_report(session_id: str, bus: EventBus) -> dict[str, Any]:
         combined_scorecard=combined_scorecard,
         combined_narrative=combined_narrative,
         combined_value_chain_plays=combined_value_chain_plays,
+        combined_vendor_recs=combined_vendor_recs,
+        combined_regulatory_scan=combined_regulatory_scan,
     )
 
     result = {
@@ -571,11 +680,14 @@ async def run_combined_report(session_id: str, bus: EventBus) -> dict[str, Any]:
         "scorecard": combined_scorecard,
         "narrative": combined_narrative,
         "value_chain_plays": combined_value_chain_plays,
+        "vendor_recs": combined_vendor_recs,
+        "regulatory_scan": combined_regulatory_scan,
         "fusion_stats": {
             "total_questions": len(merged_answers),
             "user_confirmed": confirmed,
             "agreed_with_agent": agreed,
             "discovery_needed": discovery,
+            "regulatory_applicable": run_regulatory,
         },
     }
     await bus.emit(AuditEvent(type="combined.complete", agent="combiner", data={

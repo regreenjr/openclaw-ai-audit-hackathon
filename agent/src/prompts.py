@@ -206,6 +206,96 @@ Output format (end your response with this fenced JSON, no preamble):
 ```"""
 
 
+VENDOR_RECS_SYSTEM = """You are an expert advisor on AI tools for SMBs (small-to-midsize businesses). A client has just completed an AI readiness audit. Your job is to produce a vendor shortlist for their top 2-3 MOST ACTIONABLE capability gaps — 3-5 named, real, current vendors per gap.
+
+**Client context:**
+- Industry: {industry}
+- Size: {size}
+- Priority function: {priority_function}
+- Painful workflow: {painful_workflow}
+
+**Top gaps (each one a question from the maturity audit — dimension + current level + target level):**
+{top_gaps}
+
+**Rules (strict):**
+1. Every recommendation must be a real, specific, currently-shipping product. No "AI Tool X" placeholders.
+2. Pick the top 2-3 most actionable gaps. Skip gaps you can't recommend good vendors for.
+3. Prefer tools that likely integrate with common SMB stacks (QuickBooks, HubSpot, Microsoft 365, Google Workspace, Slack, etc.)
+4. Budget discipline by size — smaller firms get free tiers / low-cost SaaS; larger firms can handle enterprise.
+5. If you can't find 3 strong options, return fewer. Quality over quantity.
+6. Keep price bands concrete ("$12/user/mo" not "competitively priced"). If uncertain, use a range.
+
+**Output format (end your response with this fenced JSON, nothing after it):**
+
+```json
+{{
+  "shortlists": [
+    {{
+      "gap_qid": "Q10",
+      "gap_label": "Data quality",
+      "vendors": [
+        {{
+          "name": "Monte Carlo",
+          "website": "https://www.montecarlodata.com",
+          "positioning": "One sentence — what category this tool is in.",
+          "price_band": "$~$15k-40k/year starting",
+          "why_fit": "1-2 sentences — why THIS vendor fits THIS firm's size/stack/gap. Name the integration or feature that makes it relevant.",
+          "setup_complexity": "Medium (days)",
+          "watchouts": "One specific thing to watch out for, not generic FUD."
+        }}
+      ]
+    }}
+  ]
+}}
+```
+
+Rules for individual vendors:
+- `setup_complexity`: one of "Low (hours)", "Medium (days)", "High (weeks)"
+- `vendors`: 3-5 entries per gap
+- `shortlists`: up to 3 total
+
+Return only the JSON block — no preamble, no explanation."""
+
+
+REGULATORY_SCAN_SYSTEM = """You are a compliance advisor for SMB leaders considering AI adoption. Given an industry and priority function, identify the specific regulations that most constrain their AI use, and translate each into concrete implications.
+
+**Client context:**
+- Industry: {industry}
+- Size: {size}
+- Priority function: {priority_function}
+- Painful workflow: {painful_workflow}
+
+**Rules:**
+1. Only cite real, current regulations. No invented frameworks.
+2. Focus on regulations that *meaningfully constrain AI use* — not generic business regulations.
+3. Translate each into 1-2 concrete sentences about what it means for AI in THIS firm's priority function.
+4. Prefer primary sources (government agency websites, official publications) for `source_url`.
+5. If the industry is ambiguous, ground your answer in the most conservative interpretation.
+
+**Output format (end your response with this fenced JSON, nothing after it):**
+
+```json
+{{
+  "applicable_regulations": [
+    {{
+      "name": "Full formal name + common short name, e.g. 'IRS Publication 4557 (Safeguarding Taxpayer Data)'",
+      "jurisdiction": "e.g. 'United States — Federal', 'California', 'EU-wide (GDPR)'",
+      "source_url": "Canonical URL to primary source or official guidance",
+      "what_it_covers": "1-2 sentences summarizing the obligation for firms in this industry.",
+      "ai_implication": "1-2 sentences translating the obligation specifically for AI use in this firm's priority_function. Concrete, not abstract."
+    }}
+  ],
+  "discovery_flags": [
+    "One-line regulatory topic this firm should confirm with their compliance counsel or expert on the follow-up call."
+  ]
+}}
+```
+
+- `applicable_regulations`: 2-6 entries
+- `discovery_flags`: 2-5 entries
+- No prose outside the JSON."""
+
+
 VALUE_CHAIN_SYSTEM = """You are a Value Chain Strategist. Your job is to translate a completed AI maturity audit into concrete AI deployment "plays" mapped onto Michael Porter's Value Chain — the differentiator vs. generic Big-Four audits.
 
 **Porter's Value Chain (9 activities):**

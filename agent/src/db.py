@@ -122,19 +122,27 @@ def update_combined(
     combined_scorecard: dict[str, Any],
     combined_narrative: dict[str, Any],
     combined_value_chain_plays: list[dict[str, Any]],
+    combined_vendor_recs: Optional[dict[str, Any]] = None,
+    combined_regulatory_scan: Optional[dict[str, Any]] = None,
 ) -> None:
     c = get_client()
     if c is None or not session_id:
         return
     try:
         from datetime import datetime, timezone
-        c.table(TABLE).update({
+        payload: dict[str, Any] = {
             "combined_scorecard": combined_scorecard,
             "combined_narrative": combined_narrative,
             "combined_value_chain_plays": combined_value_chain_plays,
             "combined_report_at": datetime.now(timezone.utc).isoformat(),
             "status": "reported",
-        }).eq("id", session_id).execute()
+        }
+        # Optional columns — skip if Supabase doesn't have them yet (migration pending)
+        if combined_vendor_recs is not None:
+            payload["combined_vendor_recs"] = combined_vendor_recs
+        if combined_regulatory_scan is not None:
+            payload["combined_regulatory_scan"] = combined_regulatory_scan
+        c.table(TABLE).update(payload).eq("id", session_id).execute()
         log.info(f"db.update_combined id={session_id}")
     except Exception as e:
         log.error(f"db.update_combined failed: {e}")
