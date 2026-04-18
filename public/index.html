@@ -340,20 +340,57 @@
     </div>
 
     <script>
-    // API URL resolution: ?api=... URL param (persisted to localStorage) > window override > localStorage > /api
+    // API URL resolution: ?api=... URL param (persisted to localStorage) > window override > localStorage
     (() => {
         const p = new URLSearchParams(window.location.search).get('api');
-        if (p) { localStorage.setItem('openclaw_api_url', p); }
+        if (p) { localStorage.setItem('gapstone_api_url', p.replace(/\/$/, '')); }
+        // Migrate legacy key
+        const legacy = localStorage.getItem('openclaw_api_url');
+        if (legacy && !localStorage.getItem('gapstone_api_url')) {
+            localStorage.setItem('gapstone_api_url', legacy);
+        }
     })();
-    const API_URL = (window.OPENCLAW_API_URL || localStorage.getItem('openclaw_api_url') || '').replace(/\/$/, '');
-    if (!API_URL) {
-        console.warn('[openclaw] No API URL configured. Set ?api=https://your-tunnel.serveo.net or localStorage.openclaw_api_url');
-        // Show tunnel banner
+    let API_URL = (window.OPENCLAW_API_URL || localStorage.getItem('gapstone_api_url') || '').replace(/\/$/, '');
+
+    function showTunnelBanner(messageHtml) {
         document.addEventListener('DOMContentLoaded', () => {
             const banner = document.getElementById('tunnelBanner');
-            if (banner) banner.classList.remove('hidden');
+            if (!banner) return;
+            banner.classList.remove('hidden');
+            const span = banner.querySelector('span');
+            if (span && messageHtml) span.innerHTML = messageHtml;
         });
     }
+
+    // Verify the configured API on load — stale tunnel URLs otherwise surface as
+    // "fatal: Failed to fetch" only when the user clicks Launch. Health-check up front.
+    async function verifyApiUrl() {
+        if (!API_URL) {
+            showTunnelBanner('⚠️ Configure tunnel: add <code class="px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-200">?api=https://your-tunnel.serveo.net</code> to the URL.');
+            return;
+        }
+        try {
+            const ctrl = new AbortController();
+            const timeout = setTimeout(() => ctrl.abort(), 6000);
+            const r = await fetch(`${API_URL}/health`, { signal: ctrl.signal });
+            clearTimeout(timeout);
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            const data = await r.json();
+            if (data.status !== 'ok') throw new Error('not ok');
+            console.log('[gapstone] API healthy:', API_URL);
+        } catch (e) {
+            console.warn('[gapstone] API unreachable at', API_URL, '—', e.message || e.name);
+            localStorage.removeItem('gapstone_api_url');
+            localStorage.removeItem('openclaw_api_url');
+            const stale = API_URL;
+            API_URL = '';  // prevent audit submit against dead URL
+            showTunnelBanner(
+                `⚠️ Tunnel unreachable: <code class="px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-200 text-xs">${stale}</code>. Append <code class="px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-200">?api=...</code> with the current URL, or click Set API URL.`
+            );
+        }
+    }
+    // Run immediately — don't block page render
+    verifyApiUrl();
 
     // Tunnel banner interactions
     document.addEventListener('DOMContentLoaded', () => {
@@ -363,7 +400,8 @@
             setBtn.addEventListener('click', () => {
                 const url = prompt('Enter your tunnel URL (e.g. https://yourname.serveo.net):', 'https://');
                 if (url && url.startsWith('http')) {
-                    localStorage.setItem('openclaw_api_url', url.replace(/\/$/, ''));
+                    localStorage.setItem('gapstone_api_url', url.replace(/\/$/, ''));
+                    localStorage.removeItem('openclaw_api_url');  // clear legacy
                     window.location.reload();
                 }
             });
@@ -728,6 +766,10 @@
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (!API_URL) {
+            alert('Backend URL is not configured or unreachable.\n\nAppend ?api=<tunnel-url> to this page URL, or click "Set API URL" in the amber banner at the top.');
+            return;
+        }
         const rawUrl = document.getElementById('companyUrl').value;
         const url = normalizeUrl(rawUrl);
         if (!url) {
