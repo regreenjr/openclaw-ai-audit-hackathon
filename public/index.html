@@ -340,7 +340,9 @@
     </div>
 
     <script>
-    // API URL resolution: ?api=... URL param (persisted to localStorage) > window override > localStorage
+    // Current tunnel URL baked in at deploy time — updated each ./start.sh restart.
+    // Chain of precedence: ?api=... query param > window override > localStorage > baked default.
+    const DEFAULT_API_URL = "https://94a92eb7545e46a0-70-167-111-226.serveousercontent.com";
     (() => {
         const p = new URLSearchParams(window.location.search).get('api');
         if (p) { localStorage.setItem('gapstone_api_url', p.replace(/\/$/, '')); }
@@ -350,7 +352,12 @@
             localStorage.setItem('gapstone_api_url', legacy);
         }
     })();
-    let API_URL = (window.OPENCLAW_API_URL || localStorage.getItem('gapstone_api_url') || '').replace(/\/$/, '');
+    let API_URL = (
+        window.OPENCLAW_API_URL ||
+        localStorage.getItem('gapstone_api_url') ||
+        DEFAULT_API_URL ||
+        ''
+    ).replace(/\/$/, '');
 
     function showTunnelBanner(messageHtml) {
         document.addEventListener('DOMContentLoaded', () => {
