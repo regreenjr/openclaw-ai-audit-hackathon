@@ -1,0 +1,21 @@
+# Python
+agent/.venv/
+agent/__pycache__/
+agent/src/__pycache__/
+agent/**/*.pyc
+agent/.env
+agent/.env.local
+
+# Node / frontend build artifacts (legacy)
+node_modules/
+.next/
+.netlify/
+
+# Editor / OS
+.DS_Store
+*.swp
+.vscode/
+.idea/
+
+# Logs
+*.log

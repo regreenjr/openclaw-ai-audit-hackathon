@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Big Four AI Maturity Audit</title>
+    <title>Openclaw AI Maturity Audit</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0a0a0a; color: #ededed; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
@@ -11,171 +11,620 @@
         .loader { border: 3px solid rgba(255,255,255,0.1); border-left-color: #fff; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .gradient-text { background: linear-gradient(90deg, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .agent-pulse { animation: pulse 1.5s ease-in-out infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        .terminal-line { border-left: 2px solid rgba(74, 222, 128, 0.3); padding-left: 10px; }
+        .heatmap-cell { transition: all 0.3s ease; }
+        .play-card { transition: all 0.3s ease; }
+        .play-card:hover { border-color: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
+
+        /* Tunnel banner */
+        #tunnelBanner {
+            background: linear-gradient(90deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1));
+            border-bottom: 1px solid rgba(245, 158, 11, 0.3);
+            color: #fbbf24;
+        }
+
+        /* Print stylesheet — invert to light theme + paginate */
+        @media print {
+            @page { margin: 0.5in; size: letter; }
+            body {
+                background: white !important;
+                color: black !important;
+                padding: 0 !important;
+                font-size: 11pt;
+            }
+            #hero, #timelineWrap, #tunnelBanner, form, .cta-buttons, details {
+                display: none !important;
+            }
+            #results {
+                display: block !important;
+                margin: 0 !important;
+                max-width: 100% !important;
+            }
+            #results > .text-center {
+                page-break-after: always;
+            }
+            #results > div.grid,
+            #results > .glass-panel {
+                page-break-before: always;
+                page-break-inside: avoid;
+            }
+            /* First section (cover) should not break before */
+            #results > .text-center:first-child {
+                page-break-before: avoid;
+            }
+            .glass-panel {
+                background: white !important;
+                border: 1px solid #d1d5db !important;
+                color: black !important;
+                backdrop-filter: none !important;
+                box-shadow: none !important;
+                padding: 20px !important;
+                margin-bottom: 16px !important;
+            }
+            .gradient-text {
+                -webkit-text-fill-color: #111 !important;
+                background: none !important;
+                color: #111 !important;
+            }
+            h2, h3, h4 { color: #111 !important; }
+            .text-gray-300, .text-gray-400, .text-gray-500, .text-white {
+                color: #374151 !important;
+            }
+            .border-gray-800, .border-white\/10, .border-white\/20 {
+                border-color: #d1d5db !important;
+            }
+            .bg-white\/5, .bg-gray-800, .bg-black\/40 {
+                background: #f9fafb !important;
+            }
+            /* Keep dimension-score colored cells but lighten for print */
+            .heatmap-cell {
+                border: 1px solid #9ca3af !important;
+            }
+            /* Value chain priority badges — keep subtle color for print */
+            .priority-1-print { background: #d1fae5 !important; color: #065f46 !important; border-color: #10b981 !important; }
+            .priority-2-print { background: #dbeafe !important; color: #1e40af !important; border-color: #3b82f6 !important; }
+            .priority-3-print { background: #fef3c7 !important; color: #92400e !important; border-color: #f59e0b !important; }
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-6">
+<body class="min-h-screen flex flex-col items-center p-6">
 
-    <!-- HERO SECTION -->
-    <div id="hero" class="w-full max-w-3xl text-center space-y-8 transition-opacity duration-500">
-        <div class="inline-block px-3 py-1 rounded-full border border-gray-700 bg-gray-900 text-xs font-medium tracking-wide text-gray-400 uppercase mb-4">
-            Zero-Click Agentic Audit
+    <!-- TUNNEL CONFIG BANNER (shown when no API URL is set) -->
+    <div id="tunnelBanner" class="hidden fixed top-0 left-0 right-0 z-50 px-4 py-2 text-sm flex items-center justify-center gap-3">
+        <span>⚠️ Configure tunnel: add <code class="px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-200">?api=https://your-tunnel.serveo.net</code> to the URL.</span>
+        <button id="setTunnelBtn" class="px-3 py-1 rounded bg-amber-500/20 border border-amber-500/40 hover:bg-amber-500/30 text-amber-100 text-xs font-medium transition-colors">
+            Set API URL
+        </button>
+        <button id="dismissTunnelBtn" class="ml-2 text-amber-300/60 hover:text-amber-100 text-lg leading-none" aria-label="Dismiss">×</button>
+    </div>
+
+    <!-- HERO -->
+    <div id="hero" class="w-full max-w-3xl text-center space-y-6 mt-20 transition-opacity duration-500">
+        <div class="inline-block px-3 py-1 rounded-full border border-gray-700 bg-gray-900 text-xs font-medium tracking-wide text-gray-400 uppercase">
+            Openclaw Hackathon · Multi-Agent Audit
         </div>
-        <h1 class="text-5xl md:text-7xl font-bold tracking-tight gradient-text">Big Four AI Maturity</h1>
-        <p class="text-xl text-gray-400 max-w-2xl mx-auto">Drop your URL. Our 7-agent swarm will scrape your public footprint, score your maturity network, and map an ROI pipeline in seconds.</p>
-        
-        <form id="auditForm" class="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <input type="url" id="companyUrl" placeholder="https://yourcompany.com" required class="w-full sm:w-96 bg-gray-900 border border-gray-700 rounded-lg px-6 py-4 text-lg focus:outline-none focus:border-white transition-colors" />
-            <button type="submit" id="submitBtn" class="w-full sm:w-auto bg-white text-black font-semibold text-lg px-8 py-4 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-3">
-                <span>Launch Swarm</span>
+        <h1 class="text-5xl md:text-7xl font-bold tracking-tight gradient-text">AI Maturity Audit</h1>
+        <p class="text-xl text-gray-400 max-w-2xl mx-auto">
+            Drop your URL. A swarm of Claude sub-agents scrapes your public footprint, predicts your maturity across 20 questions with cited evidence, and maps a 90-day roadmap — in 60 seconds.
+        </p>
+
+        <form id="auditForm" class="mt-8 space-y-4 max-w-xl mx-auto text-left">
+            <div class="glass-panel rounded-xl p-6 space-y-4">
+                <div>
+                    <label class="text-xs uppercase tracking-wider text-gray-400">Company URL</label>
+                    <input type="url" id="companyUrl" placeholder="https://yourcompany.com" required
+                        class="mt-1 w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-white transition-colors" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs uppercase tracking-wider text-gray-400">Industry</label>
+                        <input type="text" id="industry" placeholder="accounting, legal, logistics…"
+                            class="mt-1 w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-white" />
+                    </div>
+                    <div>
+                        <label class="text-xs uppercase tracking-wider text-gray-400">Size</label>
+                        <select id="size" class="mt-1 w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-white">
+                            <option>Fewer than 10</option>
+                            <option selected>10-50</option>
+                            <option>51-250</option>
+                            <option>251-1000</option>
+                            <option>More than 1000</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs uppercase tracking-wider text-gray-400">If AI fixed one thing this year, what would create the most value?</label>
+                    <input type="text" id="priorityFunction" placeholder="client intake, tax prep, quoting…"
+                        class="mt-1 w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-white" />
+                </div>
+            </div>
+            <button type="submit" id="submitBtn"
+                class="w-full bg-white text-black font-semibold text-lg px-8 py-4 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-3">
+                <span>Launch Agent Swarm</span>
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
             </button>
+            <p class="text-xs text-gray-500 text-center">
+                Powered by Claude Agent SDK. 1 researcher + 5 specialists + 1 value chain strategist + 1 critic + 1 synthesizer = 9 sub-agents.
+            </p>
         </form>
     </div>
 
-    <!-- TERMINAL LOADING STATE -->
-    <div id="loading" class="hidden w-full max-w-2xl mt-12 glass-panel rounded-xl p-6 font-mono text-sm text-green-400 transition-opacity">
-        <div class="flex items-center gap-3 mb-4 border-b border-gray-800 pb-4">
-            <div class="loader"></div>
-            <span class="text-white text-lg">Swarm Orchestrator Active</span>
-        </div>
-        <div id="terminalText" class="space-y-2 opacity-80">
-            <div>> Initializing Big Four framework...</div>
+    <!-- AGENT TIMELINE -->
+    <div id="timelineWrap" class="hidden w-full max-w-4xl mt-12 space-y-4">
+        <div class="glass-panel rounded-xl p-6">
+            <div class="flex items-center gap-3 mb-4 border-b border-gray-800 pb-3">
+                <div class="loader"></div>
+                <span class="text-white text-lg font-semibold" id="phaseLabel">Initializing orchestrator…</span>
+                <span id="liveCost" class="text-xs text-gray-500 ml-auto"></span>
+            </div>
+            <!-- Agent cards -->
+            <div id="agentCards" class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+                <!-- populated by JS -->
+            </div>
+            <!-- Terminal -->
+            <div class="bg-black/40 rounded-lg p-4 font-mono text-xs max-h-64 overflow-y-auto" id="terminal">
+                <div class="text-gray-500">> waiting for orchestrator...</div>
+            </div>
         </div>
     </div>
 
-    <!-- RESULTS DASHBOARD -->
-    <div id="results" class="hidden w-full max-w-5xl mt-12 space-y-8 animate-fade-in">
-        <div class="text-center mb-12">
-            <h2 class="text-4xl font-bold">Audit Complete.</h2>
-            <p class="text-gray-400 mt-2">Maturity mapping and integration vectors identified.</p>
+    <!-- RESULTS -->
+    <div id="results" class="hidden w-full max-w-5xl mt-12 space-y-8">
+        <div class="text-center mb-8 fade-in">
+            <h2 class="text-4xl font-bold">Audit Complete</h2>
+            <p class="text-gray-400 mt-2" id="resultsSubtitle">Multi-agent scorecard + Porter's Value Chain deployment plan + 90-day roadmap.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- SCORE CARD -->
+            <!-- OVERALL SCORE -->
             <div class="glass-panel p-8 rounded-2xl flex flex-col items-center justify-center text-center">
-                <div class="text-sm text-gray-400 uppercase tracking-widest mb-2">Overall Maturity</div>
-                <div id="avgScore" class="text-7xl font-bold gradient-text">0.0</div>
+                <div class="text-xs text-gray-400 uppercase tracking-widest mb-2">Overall Maturity</div>
+                <div id="overallScore" class="text-7xl font-bold gradient-text">0.0</div>
                 <div class="text-gray-500 mt-2">out of 4.0</div>
+                <div id="maturityLabel" class="mt-3 text-sm text-gray-400"></div>
             </div>
 
             <!-- HEATMAP -->
-            <div class="glass-panel p-8 rounded-2xl md:col-span-2">
-                <h3 class="text-xl font-semibold mb-6 border-b border-gray-800 pb-4">Maturity Dimensions</h3>
-                <div class="grid grid-cols-2 gap-4" id="heatmapGrid">
-                    <!-- Populated via JS -->
+            <div class="glass-panel p-6 rounded-2xl md:col-span-2">
+                <h3 class="text-lg font-semibold mb-4 border-b border-gray-800 pb-3">Maturity Heatmap (5 × 4)</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs" id="heatmapTable">
+                        <thead>
+                            <tr class="text-gray-400">
+                                <th class="text-left p-2">Dimension</th>
+                                <th class="p-2">L1 Ad-hoc</th>
+                                <th class="p-2">L2 Experimental</th>
+                                <th class="p-2">L3 Operational</th>
+                                <th class="p-2">L4 Transformational</th>
+                                <th class="p-2 text-right">Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="heatmapBody"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <!-- PORTER'S VALUE CHAIN -->
+        <!-- EXEC SUMMARY -->
+        <div class="glass-panel p-8 rounded-2xl fade-in">
+            <h3 class="text-xl font-semibold mb-4 border-b border-gray-800 pb-3">Executive Summary</h3>
+            <div class="text-gray-300 leading-relaxed whitespace-pre-wrap" id="execSummary"></div>
+        </div>
+
+        <!-- TOP 5 GAPS -->
         <div class="glass-panel p-8 rounded-2xl">
-            <h3 class="text-xl font-semibold mb-6 border-b border-gray-800 pb-4">Value Chain Integration Targets</h3>
-            <div class="space-y-4" id="portersList">
-                <!-- Populated via JS -->
+            <h3 class="text-xl font-semibold mb-4 border-b border-gray-800 pb-3">Top 5 Gaps</h3>
+            <div class="space-y-3" id="gapsList"></div>
+        </div>
+
+        <!-- VALUE CHAIN DEPLOYMENT PLAN -->
+        <div class="glass-panel p-8 rounded-2xl">
+            <h3 class="text-xl font-semibold mb-1 border-b border-gray-800 pb-3">Value Chain Deployment Plan</h3>
+            <p class="text-sm text-gray-400 mt-3 mb-5">Where to deploy AI first, mapped to Porter's Value Chain.</p>
+            <div class="space-y-3" id="valueChainPlays">
+                <div class="text-sm text-gray-500 italic">Waiting for value chain strategist…</div>
             </div>
         </div>
 
+        <!-- 90-DAY ROADMAP -->
+        <div class="glass-panel p-8 rounded-2xl">
+            <h3 class="text-xl font-semibold mb-4 border-b border-gray-800 pb-3">90-Day Roadmap</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="roadmap"></div>
+        </div>
+
+        <!-- EVIDENCE -->
+        <details class="glass-panel p-6 rounded-2xl">
+            <summary class="cursor-pointer text-sm text-gray-400 hover:text-white">Evidence dossier (researcher output)</summary>
+            <pre class="mt-4 text-xs text-gray-500 overflow-x-auto" id="evidenceJson"></pre>
+        </details>
+
         <!-- CTA -->
-        <div class="mt-16 text-center glass-panel p-12 rounded-2xl border-t border-white/20 bg-gradient-to-b from-white/5 to-transparent">
-            <h2 class="text-3xl font-bold text-white mb-4">Execute The Roadmap</h2>
-            <p class="text-gray-400 mb-8 max-w-xl mx-auto">You have severe gaps in your automation pipeline. Book a 30-minute technical implementation call to map the exact fixes.</p>
-            <a href="#" class="inline-block bg-white text-black font-bold text-xl px-10 py-5 rounded-xl hover:scale-105 transition-transform shadow-[0_0_40px_rgba(255,255,255,0.3)]">
-                Book $1k Strategy Call
-            </a>
+        <div class="mt-12 text-center glass-panel p-12 rounded-2xl bg-gradient-to-b from-white/5 to-transparent border-t border-white/20">
+            <h2 class="text-3xl font-bold text-white mb-3">Close the Gap.</h2>
+            <p class="text-gray-400 mb-8 max-w-xl mx-auto">Book a 30-minute call with an AI integration expert to turn these gaps into a funded, prioritized roadmap.</p>
+            <div class="cta-buttons flex flex-col sm:flex-row gap-4 items-center justify-center">
+                <a href="#" class="inline-block bg-white text-black font-bold text-xl px-10 py-5 rounded-xl hover:scale-105 transition-transform shadow-[0_0_40px_rgba(255,255,255,0.3)]">
+                    Book $1k Strategy Call
+                </a>
+                <button type="button" id="downloadPdfBtn" class="inline-flex items-center gap-2 bg-transparent border border-white/30 text-white font-medium text-base px-6 py-4 rounded-xl hover:bg-white/10 hover:border-white/50 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"></path></svg>
+                    Download PDF
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
-        const form = document.getElementById('auditForm');
-        const hero = document.getElementById('hero');
-        const loading = document.getElementById('loading');
-        const results = document.getElementById('results');
-        const terminalText = document.getElementById('terminalText');
-        const submitBtn = document.getElementById('submitBtn');
-
-        const loadingSteps = [
-            "> Spawning Specialist Agents (Strategy, Data, Tech, Talent, Governance)...",
-            "> Scraping domain footprint and SEC filings...",
-            "> Analyzing organizational topology on LinkedIn...",
-            "> Critic Agent: Challenging assigned data maturity levels...",
-            "> Synthesizer Agent: Mapping gaps to Porter's Value Chain...",
-            "> Finalizing markdown executive brief..."
-        ];
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const url = document.getElementById('companyUrl').value;
-            const domain = new URL(url).hostname.replace('www.', '');
-
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<div class="loader"></div>';
-            hero.classList.add('opacity-50', 'pointer-events-none');
-            loading.classList.remove('hidden');
-
-            let step = 0;
-            const interval = setInterval(() => {
-                if(step < loadingSteps.length) {
-                    const el = document.createElement('div');
-                    el.textContent = loadingSteps[step];
-                    terminalText.appendChild(el);
-                    step++;
-                }
-            }, 800);
-
-            try {
-                // Hardcoded to the live Serveo backend tunnel logic
-                const API_URL = 'https://3481a70798030a75-68-2-40-190.serveousercontent.com/api/audit';
-                
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ companyUrl: url, companyName: domain.split('.')[0].toUpperCase() })
-                });
-
-                const data = await response.json();
-                clearInterval(interval);
-
-                if (data.error) throw new Error(data.error);
-
-                document.getElementById('avgScore').textContent = data.avgScore;
-                
-                const heatmap = document.getElementById('heatmapGrid');
-                heatmap.innerHTML = '';
-                for (const [key, val] of Object.entries(data.bigFourScores)) {
-                    let color = val >= 3 ? 'text-green-400 bg-green-400/10 border-green-400/20' : 'text-amber-400 bg-amber-400/10 border-amber-400/20';
-                    heatmap.innerHTML += `
-                        <div class="p-4 rounded-lg border ${color} flex justify-between items-center">
-                            <span class="font-medium">${key}</span>
-                            <span class="text-xl font-bold">L${val}</span>
-                        </div>
-                    `;
-                }
-
-                const porters = document.getElementById('portersList');
-                porters.innerHTML = '';
-                data.portersRecommendations.forEach((rec, idx) => {
-                    porters.innerHTML += `
-                        <div class="flex gap-4 items-start p-4 bg-white/5 rounded-lg border border-white/10">
-                            <div class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center font-bold text-white shrink-0">${idx+1}</div>
-                            <div>
-                                <h4 class="text-white font-bold text-lg">${rec.activity}</h4>
-                                <p class="text-gray-400 mt-1">${rec.reason}</p>
-                            </div>
-                        </div>
-                    `;
-                });
-
-                loading.classList.add('hidden');
-                hero.classList.add('hidden');
-                results.classList.remove('hidden');
-
-            } catch(e) {
-                clearInterval(interval);
-                terminalText.innerHTML += `<div class="text-red-500">> Error: Connection to Swarm failed. ${e.message}</div>`;
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Try Again';
-            }
+    // API URL resolution: ?api=... URL param (persisted to localStorage) > window override > localStorage > /api
+    (() => {
+        const p = new URLSearchParams(window.location.search).get('api');
+        if (p) { localStorage.setItem('openclaw_api_url', p); }
+    })();
+    const API_URL = (window.OPENCLAW_API_URL || localStorage.getItem('openclaw_api_url') || '').replace(/\/$/, '');
+    if (!API_URL) {
+        console.warn('[openclaw] No API URL configured. Set ?api=https://your-tunnel.serveo.net or localStorage.openclaw_api_url');
+        // Show tunnel banner
+        document.addEventListener('DOMContentLoaded', () => {
+            const banner = document.getElementById('tunnelBanner');
+            if (banner) banner.classList.remove('hidden');
         });
+    }
+
+    // Tunnel banner interactions
+    document.addEventListener('DOMContentLoaded', () => {
+        const setBtn = document.getElementById('setTunnelBtn');
+        const dismissBtn = document.getElementById('dismissTunnelBtn');
+        if (setBtn) {
+            setBtn.addEventListener('click', () => {
+                const url = prompt('Enter your tunnel URL (e.g. https://yourname.serveo.net):', 'https://');
+                if (url && url.startsWith('http')) {
+                    localStorage.setItem('openclaw_api_url', url.replace(/\/$/, ''));
+                    window.location.reload();
+                }
+            });
+        }
+        if (dismissBtn) {
+            dismissBtn.addEventListener('click', () => {
+                const banner = document.getElementById('tunnelBanner');
+                if (banner) banner.classList.add('hidden');
+            });
+        }
+        // Download PDF button
+        const pdfBtn = document.getElementById('downloadPdfBtn');
+        if (pdfBtn) {
+            pdfBtn.addEventListener('click', () => window.print());
+        }
+    });
+
+    const AGENTS = [
+        { id: "researcher",              label: "Researcher",   emoji: "🔍" },
+        { id: "specialist.D1",           label: "Strategy",     emoji: "🎯" },
+        { id: "specialist.D2",           label: "Data",         emoji: "💾" },
+        { id: "specialist.D3",           label: "People",       emoji: "👥" },
+        { id: "specialist.D4",           label: "Governance",   emoji: "⚖️" },
+        { id: "specialist.D5",           label: "Use Cases",    emoji: "🚀" },
+        { id: "value_chain_strategist",  label: "Value Chain",  emoji: "🗺️" },
+        { id: "critic",                  label: "Critic",       emoji: "🔎" },
+        { id: "synthesizer",             label: "Synthesizer",  emoji: "✍️" },
+    ];
+
+    // Porter's Value Chain activity metadata
+    const ACTIVITY_META = {
+        // Primary activities
+        inbound:       { label: "Primary: Inbound Logistics",  group: "primary" },
+        operations:    { label: "Primary: Operations",          group: "primary" },
+        outbound:      { label: "Primary: Outbound Logistics", group: "primary" },
+        marketing:     { label: "Primary: Marketing & Sales",   group: "primary" },
+        service:       { label: "Primary: Service",             group: "primary" },
+        // Support activities
+        infrastructure:{ label: "Support: Infrastructure",      group: "support" },
+        hr:            { label: "Support: Human Resources",     group: "support" },
+        "tech-dev":    { label: "Support: Tech Development",    group: "support" },
+        procurement:   { label: "Support: Procurement",         group: "support" },
+    };
+
+    function priorityStyle(priority) {
+        // 1=emerald, 2=sky, 3=amber
+        if (priority === 1) return {
+            badge: "bg-emerald-400/20 text-emerald-300 border-emerald-500/30",
+            printClass: "priority-1-print",
+            label: "Priority 1"
+        };
+        if (priority === 2) return {
+            badge: "bg-sky-400/20 text-sky-300 border-sky-500/30",
+            printClass: "priority-2-print",
+            label: "Priority 2"
+        };
+        return {
+            badge: "bg-amber-400/20 text-amber-300 border-amber-500/30",
+            printClass: "priority-3-print",
+            label: `Priority ${priority}`
+        };
+    }
+
+    const form = document.getElementById('auditForm');
+    const hero = document.getElementById('hero');
+    const timelineWrap = document.getElementById('timelineWrap');
+    const agentCardsEl = document.getElementById('agentCards');
+    const terminal = document.getElementById('terminal');
+    const results = document.getElementById('results');
+    const submitBtn = document.getElementById('submitBtn');
+    const phaseLabel = document.getElementById('phaseLabel');
+    const liveCost = document.getElementById('liveCost');
+
+    const MATURITY_LABELS = {
+        1: "Level 1 · Ad-hoc",
+        2: "Level 2 · Experimental",
+        3: "Level 3 · Operational",
+        4: "Level 4 · Transformational",
+    };
+
+    function renderAgentCards() {
+        agentCardsEl.innerHTML = AGENTS.map(a => `
+            <div id="card-${a.id.replace('.', '-')}" class="glass-panel rounded-lg p-3 text-center opacity-40">
+                <div class="text-2xl">${a.emoji}</div>
+                <div class="text-xs mt-1 text-gray-300">${a.label}</div>
+                <div class="text-[10px] text-gray-500 mt-1 agent-status">idle</div>
+            </div>
+        `).join('');
+    }
+
+    function setAgentStatus(agentId, status, color) {
+        const card = document.getElementById(`card-${agentId.replace('.', '-')}`);
+        if (!card) return;
+        card.classList.remove('opacity-40');
+        const statusEl = card.querySelector('.agent-status');
+        statusEl.textContent = status;
+        card.style.borderColor = color || 'rgba(74, 222, 128, 0.4)';
+        if (status === 'running') card.classList.add('agent-pulse');
+        else card.classList.remove('agent-pulse');
+    }
+
+    function termLine(text, color = 'text-gray-400') {
+        const el = document.createElement('div');
+        el.className = `terminal-line fade-in ${color}`;
+        el.textContent = text;
+        terminal.appendChild(el);
+        terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    function scoreColor(score) {
+        if (score >= 3.5) return 'bg-emerald-400/20 text-emerald-300 border-emerald-500/30';
+        if (score >= 2.5) return 'bg-sky-400/20 text-sky-300 border-sky-500/30';
+        if (score >= 1.75) return 'bg-amber-400/20 text-amber-300 border-amber-500/30';
+        return 'bg-rose-400/20 text-rose-300 border-rose-500/30';
+    }
+
+    let totalCost = 0;
+
+    function handleEvent(ev) {
+        const { type, agent, data } = ev;
+
+        if (type === 'pipeline.start') {
+            phaseLabel.textContent = `Auditing ${data.company_name}...`;
+            termLine(`> orchestrator: starting audit for ${data.company_name} (${data.url})`, 'text-emerald-400');
+        }
+        else if (type === 'pipeline.phase') {
+            phaseLabel.textContent = `Phase: ${data.phase}${data.count ? ' × ' + data.count : ''}`;
+            termLine(`> phase: ${data.phase}`, 'text-emerald-400');
+        }
+        else if (type === 'agent.start') {
+            setAgentStatus(agent, 'running', 'rgba(250, 204, 21, 0.6)');
+            termLine(`> ${agent}: started`, 'text-yellow-300');
+        }
+        else if (type === 'agent.tool_use') {
+            termLine(`  ${agent} → ${data.tool}(${JSON.stringify(data.input).slice(0, 80)})`, 'text-cyan-300');
+        }
+        else if (type === 'agent.thought') {
+            if (data.text) termLine(`  ${agent}: ${data.text}`, 'text-gray-400');
+        }
+        else if (type === 'agent.done') {
+            setAgentStatus(agent, 'done', 'rgba(74, 222, 128, 0.5)');
+            if (data.cost_usd) {
+                totalCost += data.cost_usd;
+                liveCost.textContent = `cost: $${totalCost.toFixed(3)}`;
+            }
+            termLine(`  ${agent}: done ($${(data.cost_usd || 0).toFixed(3)})`, 'text-emerald-400');
+        }
+        else if (type === 'agent.error') {
+            setAgentStatus(agent, 'error', 'rgba(244, 63, 94, 0.6)');
+            termLine(`! ${agent}: ${data.error}`, 'text-rose-400');
+        }
+        else if (type === 'evidence') {
+            document.getElementById('evidenceJson').textContent = JSON.stringify(data, null, 2);
+        }
+        else if (type === 'critic.challenge') {
+            termLine(`  critic ⚡ ${data.text}`, 'text-fuchsia-300');
+        }
+        else if (type === 'scorecard') {
+            renderScorecard(data);
+        }
+        else if (type === 'narrative') {
+            renderNarrative(data);
+        }
+        else if (type === 'value_chain') {
+            renderValueChain(data.plays || []);
+        }
+        else if (type === 'pipeline.complete') {
+            termLine(`> complete — overall maturity ${data.overall_score}/4.0`, 'text-emerald-400');
+            results.classList.remove('hidden');
+            results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        else if (type === 'pipeline.error') {
+            termLine(`! pipeline failed: ${data.error}`, 'text-rose-400');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Try Again';
+        }
+    }
+
+    function renderScorecard(s) {
+        document.getElementById('overallScore').textContent = s.overall_score.toFixed(1);
+        document.getElementById('maturityLabel').textContent = MATURITY_LABELS[Math.round(s.overall_score)] || '';
+
+        const DIM_NAMES = {
+            D1: "Strategy & Leadership", D2: "Data & Infrastructure",
+            D3: "People & Skills",       D4: "Governance & Risk",
+            D5: "Use Cases & Adoption",
+        };
+        const body = document.getElementById('heatmapBody');
+        body.innerHTML = '';
+        for (const [dim, score] of Object.entries(s.dimension_scores)) {
+            const currentLvl = Math.round(score);
+            const row = document.createElement('tr');
+            row.className = 'border-t border-gray-800';
+            row.innerHTML = `<td class="p-2 text-gray-300">${dim} · ${DIM_NAMES[dim]}</td>` +
+                [1,2,3,4].map(L => `
+                    <td class="p-2 text-center">
+                        <div class="heatmap-cell mx-auto w-12 h-8 rounded border ${L === currentLvl ? scoreColor(score) : 'border-gray-800 text-gray-700'} flex items-center justify-center font-semibold">
+                            ${L === currentLvl ? 'L'+L : ''}
+                        </div>
+                    </td>
+                `).join('') +
+                `<td class="p-2 text-right font-bold text-white">${score.toFixed(1)}</td>`;
+            body.appendChild(row);
+        }
+
+        const gapsList = document.getElementById('gapsList');
+        gapsList.innerHTML = s.top_gaps.map((g, i) => `
+            <div class="flex gap-3 items-start p-4 bg-white/5 rounded-lg border border-white/10">
+                <div class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center font-bold text-white shrink-0">${i+1}</div>
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h4 class="text-white font-semibold">${g.stem}</h4>
+                        <span class="text-[10px] px-2 py-0.5 bg-gray-800 rounded text-gray-400">${g.dimension}</span>
+                        ${g.discovery_needed ? '<span class="text-[10px] px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded border border-amber-500/30">discovery needed</span>' : ''}
+                    </div>
+                    <div class="text-gray-400 mt-1 text-sm">Current L${g.current} → Target L${g.target} (gap +${g.gap})</div>
+                    ${g.evidence && g.evidence.length ? `
+                        <details class="mt-2 text-xs text-gray-500">
+                            <summary class="cursor-pointer hover:text-gray-300">${g.evidence.length} evidence citation${g.evidence.length>1?'s':''}</summary>
+                            <ul class="mt-2 space-y-1">${g.evidence.map(e => `<li>· ${e}</li>`).join('')}</ul>
+                        </details>
+                    ` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderNarrative(n) {
+        document.getElementById('execSummary').textContent = n.exec_summary || '';
+        const roadmap = document.getElementById('roadmap');
+        roadmap.innerHTML = '';
+        [['30 days','30_days','text-emerald-300'],['60 days','60_days','text-sky-300'],['90 days','90_days','text-fuchsia-300']].forEach(([label, key, color]) => {
+            const items = (n.roadmap_90_day && n.roadmap_90_day[key]) || [];
+            roadmap.innerHTML += `
+                <div class="bg-white/5 rounded-lg p-5 border border-white/10">
+                    <div class="text-xs uppercase tracking-widest ${color} mb-3">${label}</div>
+                    <ul class="space-y-2 text-sm text-gray-300">
+                        ${items.map(i => `<li>· ${i}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        });
+    }
+
+    function renderValueChain(plays) {
+        const container = document.getElementById('valueChainPlays');
+        if (!plays || !plays.length) {
+            container.innerHTML = '<div class="text-sm text-gray-500 italic">No value chain plays returned.</div>';
+            return;
+        }
+        // Sort by priority ascending
+        const sorted = [...plays].sort((a, b) => (a.priority || 99) - (b.priority || 99));
+        container.innerHTML = sorted.map(play => {
+            const pstyle = priorityStyle(play.priority);
+            const activityLabel = play.activity_label || (ACTIVITY_META[play.activity] && ACTIVITY_META[play.activity].label) || play.activity || 'Activity';
+            return `
+                <div class="play-card relative p-5 bg-white/5 rounded-lg border border-white/10 fade-in">
+                    <div class="flex items-start justify-between gap-3 mb-3">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-[10px] uppercase tracking-wider px-2 py-1 rounded border ${pstyle.badge} ${pstyle.printClass} font-semibold">
+                                ${pstyle.label}
+                            </span>
+                            ${play.addresses_gap ? `<span class="text-[10px] px-2 py-1 bg-gray-800 rounded text-gray-400 border border-gray-700">Addresses ${play.addresses_gap}</span>` : ''}
+                        </div>
+                        <span class="text-[10px] uppercase tracking-wider px-2 py-1 rounded bg-white/5 text-gray-400 border border-white/10 shrink-0">
+                            ${activityLabel}
+                        </span>
+                    </div>
+                    <h4 class="text-white font-semibold text-base mb-2">${play.title || 'Untitled play'}</h4>
+                    <p class="text-sm text-gray-300 leading-relaxed">${play.description || ''}</p>
+                    ${play.expected_impact ? `
+                        <div class="mt-3 pt-3 border-t border-white/10">
+                            <p class="text-xs italic text-gray-400"><span class="uppercase tracking-wider text-[10px] text-gray-500 not-italic">Expected impact · </span>${play.expected_impact}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function streamAudit(payload) {
+        const res = await fetch(`${API_URL}/api/audit-stream`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+        const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+        let buffer = '';
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += value;
+            let idx;
+            while ((idx = buffer.indexOf('\n\n')) !== -1) {
+                const frame = buffer.slice(0, idx);
+                buffer = buffer.slice(idx + 2);
+                const dataLines = frame.split('\n').filter(l => l.startsWith('data: '));
+                if (!dataLines.length) continue;
+                const payload = dataLines.map(l => l.slice(6)).join('\n');
+                try {
+                    const outer = JSON.parse(payload);
+                    // sse-starlette wraps payload as plain json string (already parsed)
+                    handleEvent(outer);
+                } catch (e) {
+                    console.warn('parse fail', e, payload.slice(0, 100));
+                }
+            }
+        }
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const url = document.getElementById('companyUrl').value;
+        const industry = document.getElementById('industry').value || 'unknown';
+        const size = document.getElementById('size').value;
+        const priorityFunction = document.getElementById('priorityFunction').value || 'unknown';
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<div class="loader"></div>';
+        hero.classList.add('opacity-40', 'pointer-events-none');
+        timelineWrap.classList.remove('hidden');
+        renderAgentCards();
+        terminal.innerHTML = '';
+        totalCost = 0;
+        liveCost.textContent = '';
+
+        try {
+            let domain = url.replace(/^https?:\/\//,'').split('/')[0].replace(/^www\./,'');
+            await streamAudit({
+                companyUrl: url,
+                companyName: domain.split('.')[0].replace(/^\w/, c => c.toUpperCase()),
+                industry, size, role: 'COO / Operations lead',
+                priority_function: priorityFunction,
+            });
+        } catch (err) {
+            termLine(`! fatal: ${err.message}`, 'text-rose-400');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Try Again';
+        }
+    });
     </script>
 </body>
 </html>

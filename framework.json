@@ -1,0 +1,220 @@
+{
+  "levels": [
+    { "id": "L1", "name": "Ad-hoc" },
+    { "id": "L2", "name": "Experimental" },
+    { "id": "L3", "name": "Operational" },
+    { "id": "L4", "name": "Transformational" }
+  ],
+  "dimensions": [
+    {
+      "id": "D1",
+      "name": "Strategy & Leadership",
+      "cells": [
+        {
+          "level": "L1",
+          "current_state": "AI comes up reactively, usually when a staff member brings in a tool they have seen elsewhere. No defined vision for how AI fits the business. Spend is incidental, hidden inside other line items.",
+          "next_moves": [
+            "60-minute leadership workshop to name 3 business outcomes AI should support this year.",
+            "One-page AI point-of-view stating what AI is for in this business — and what it is not.",
+            "Assign a single executive sponsor (even part-time) to own AI decisions."
+          ]
+        },
+        {
+          "level": "L2",
+          "current_state": "Leadership supports a few pilots, but there is no written strategy or formal tie to business goals. Priorities shift with attention; projects start and stall. Senior staff discuss AI without shared definitions.",
+          "next_moves": [
+            "Produce a written 12-18 month AI roadmap with 3-5 named initiatives, owners, and success metrics.",
+            "Stand up a bi-weekly AI steering check-in with the sponsor and initiative owners.",
+            "Tie each initiative to an existing business KPI so AI spend maps to numbers the company already tracks."
+          ]
+        },
+        {
+          "level": "L3",
+          "current_state": "Documented AI roadmap with executive sponsorship and clear owners. Initiatives prioritized annually and measured against KPIs. AI appears in the operating plan.",
+          "next_moves": [
+            "Elevate AI from operational roadmap to strategic plan — annual plan, board updates, investor/partner comms.",
+            "Shift from project ROI to portfolio view: which combinations of initiatives compound?",
+            "Quarterly competitive scan of peer and adjacent-industry AI deployments, used to rebalance priorities."
+          ]
+        },
+        {
+          "level": "L4",
+          "current_state": "AI is core to strategy, reviewed at the board level, and shapes how the business competes. Leadership treats AI capability as a long-term differentiator, not a cost center.",
+          "sustain_extend": [
+            "Build AI literacy at board/ownership level via briefings and external advisors.",
+            "Make AI capability a criterion in M&A, hiring, and partner decisions.",
+            "Publish an external AI point-of-view to compound brand and talent advantages."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D2",
+      "name": "Data & Infrastructure",
+      "cells": [
+        {
+          "level": "L1",
+          "current_state": "Data lives in spreadsheets, shared drives, and email threads. Information moves by manual copy-paste. No single source of truth for core entities (customers, jobs, transactions). Reports are re-stitched each time they are needed.",
+          "next_moves": [
+            "One-page data map of the top 5 data sources and where each truly lives today.",
+            "Pick one core entity (clients, matters, orders) and consolidate it into a single system of record.",
+            "Establish a shared naming convention and folder structure for files that must stay in drives for now."
+          ]
+        },
+        {
+          "level": "L2",
+          "current_state": "Core systems of record exist but operate as islands. Data quality varies, integrations are manual or brittle, and a cross-system view requires someone to pull it by hand.",
+          "next_moves": [
+            "Identify the 2-3 integrations that would unlock the most time savings; implement via lightweight iPaaS (Zapier, Make) or native connectors.",
+            "Designate data owners per system — one person accountable for definitions, quality, access.",
+            "Move AI-relevant data (documents, transcripts, interactions) into a searchable, permissioned store an AI system could safely query."
+          ]
+        },
+        {
+          "level": "L3",
+          "current_state": "Data is centralized in a warehouse or lake, integrations are standardized via APIs, and governance exists. Teams self-serve common reports. Data quality is monitored with named owners.",
+          "next_moves": [
+            "Stand up a retrieval layer (vector store + structured views) so AI tools work against governed data, not ad-hoc exports.",
+            "Introduce data contracts for top upstream sources so schema changes do not silently break AI use.",
+            "Move to near-real-time availability on the 2-3 datasets that drive operational AI."
+          ]
+        },
+        {
+          "level": "L4",
+          "current_state": "Unified, real-time, ML-ready platform supports self-serve analytics and governed AI workloads. Data contracts, lineage, and quality signals continuously monitored.",
+          "sustain_extend": [
+            "Treat data as a product — named products, SLAs, roadmaps, internal customers.",
+            "Invest in model/data observability (drift, freshness, usage).",
+            "Evaluate whether proprietary data enables new offerings (benchmarks, insights products, data partnerships)."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D3",
+      "name": "People & Skills",
+      "cells": [
+        {
+          "level": "L1",
+          "current_state": "Most staff have limited direct experience with AI tools. No training exists. Staff who do use AI use personal accounts without guidance.",
+          "next_moves": [
+            "60-minute all-hands on what AI is, what the business endorses using it for, and what to avoid.",
+            "Issue approved AI tool accounts to the ~20% of staff whose roles benefit most.",
+            "Publish a short 'how we use AI here' guide with 5-10 concrete examples drawn from real jobs in the business."
+          ]
+        },
+        {
+          "level": "L2",
+          "current_state": "A handful of early-adopter staff use AI tools, often self-taught, sometimes through personal accounts. Knowledge stays in pockets; nothing is documented or shared systematically.",
+          "next_moves": [
+            "Build structured training by role, with real prompts and workflows tied to each role's actual tasks.",
+            "Create a shared prompt library or playbook tied to recurring workflows, with a named maintainer.",
+            "Name internal AI champions per team, with explicit time allocated to support peers."
+          ]
+        },
+        {
+          "level": "L3",
+          "current_state": "Most teams have baseline AI training, champions exist, and specialist ownership (or a small team) drives adoption. Practices are documented and shared.",
+          "next_moves": [
+            "Add AI fluency to hiring rubrics and onboarding so new hires start at the organization's baseline.",
+            "Establish role-specific certifications or completion tracking so AI fluency is measurable per team.",
+            "Allocate dedicated continuous-learning budget — internal hackathons, conferences, paid subscriptions."
+          ]
+        },
+        {
+          "level": "L4",
+          "current_state": "AI fluency is a baseline expectation across the workforce. Specialized talent is available, a learning culture is in place, and AI-assisted work is the norm.",
+          "sustain_extend": [
+            "Build internal certifications with external credibility so staff skills are portable and the employer brand benefits.",
+            "Rotate staff through an AI guild or center of excellence to seed capability across teams.",
+            "Offer client- or partner-facing AI enablement — customer success compounds retention."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D4",
+      "name": "Governance & Risk",
+      "cells": [
+        {
+          "level": "L1",
+          "current_state": "No written AI policy. Staff use whatever tools they discover, often pasting sensitive information into public AI services. Vendor decisions are made independently at the team level.",
+          "next_moves": [
+            "One-page AI acceptable use policy covering approved tools, prohibited data types, and an escalation path.",
+            "Add a 5-question AI review to existing procurement or vendor intake.",
+            "Map which regulations or contractual obligations apply to your data (confidentiality, client privilege, PHI, PII, payment data) so policy focuses on the highest-stakes categories."
+          ]
+        },
+        {
+          "level": "L2",
+          "current_state": "Informal guidelines (a Slack post or memo) exist, but nothing enforceable. Vendor selection is ad-hoc per team. Risks surface reactively when something goes wrong.",
+          "next_moves": [
+            "Upgrade the memo into a formal signed policy covering acceptable use, data handling, vendor review, incident reporting.",
+            "Run AI risk assessments on the top 3-5 tools in use — what data flows in, where does it go, what could go wrong?",
+            "Give legal/compliance visibility into AI initiatives before, not after, go-live."
+          ]
+        },
+        {
+          "level": "L3",
+          "current_state": "Formal policy covers acceptable use, data, and vendors. Risks assessed pre-deployment and documented. Legal/compliance is part of the process.",
+          "next_moves": [
+            "Move from assessment-at-launch to continuous monitoring — periodic output reviews, vendor changes, new regulations.",
+            "Establish a model/tool review board (small cross-functional committee, monthly).",
+            "Train staff on the policy annually with scenario-based exercises, not just read-and-acknowledge."
+          ]
+        },
+        {
+          "level": "L4",
+          "current_state": "Governance is continuous and embedded — auditable, monitored, with a model review board, red-teaming, and proactive regulator and partner engagement.",
+          "sustain_extend": [
+            "Publish a trust and transparency statement clients and partners can reference in their own procurement.",
+            "Contribute to industry working groups or standards bodies.",
+            "Invest in automated controls (DLP, prompt logging, approval workflows) so governance scales without proportional headcount."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D5",
+      "name": "Use Cases & Adoption",
+      "cells": [
+        {
+          "level": "L1",
+          "current_state": "No AI-powered workflows in production. Any AI use is individual experimentation. No mechanism for deciding which use cases to pursue or how to measure them.",
+          "next_moves": [
+            "2-hour use-case workshop: list repetitive, high-volume, information-heavy tasks; score by value × feasibility; pick 2-3 to pilot.",
+            "Pilot one low-risk, internal-facing workflow (drafting, summarization, extraction) before anything client-facing.",
+            "Define success upfront — time saved per task, error rate, NPS — so the pilot produces evidence, not anecdote."
+          ]
+        },
+        {
+          "level": "L2",
+          "current_state": "1-2 AI pilots exist — sometimes informally — but nothing is systematically scaled, measured, or prioritized. Interesting ideas win over high-value ones.",
+          "next_moves": [
+            "Introduce a lightweight value × feasibility × strategic-fit prioritization framework and actually apply it to the backlog.",
+            "Establish pre/post baselines on current pilots so value is measurable, not guessed.",
+            "Create a productionization checklist — owner, monitoring, retirement trigger — before you scale anything."
+          ]
+        },
+        {
+          "level": "L3",
+          "current_state": "Multiple AI workflows run in production across departments, with ROI tracked and a defined scaling path. A portfolio is emerging.",
+          "next_moves": [
+            "Move to portfolio-level management: quarterly review, retire underperformers, double down on winners.",
+            "Tie value tracking to finance systems so AI-attributed savings or revenue appear in the P&L, not slides.",
+            "Launch one flagship client-facing AI capability that differentiates the business externally, not just internally."
+          ]
+        },
+        {
+          "level": "L4",
+          "current_state": "Dozens of AI capabilities run across the business, managed as a portfolio, with continuous optimization, standard scaling playbooks, and value measured continuously.",
+          "sustain_extend": [
+            "Explore AI-native offerings — productized services, outcome-based contracts, new pricing models.",
+            "Invest in agent/orchestration layers so new use cases ship faster and cheaper than the last.",
+            "Treat AI capability as a moat — measure your rate of improvement against competitors, not your own past."
+          ]
+        }
+      ]
+    }
+  ]
+}

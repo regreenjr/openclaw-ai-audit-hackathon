@@ -1,0 +1,3 @@
+# PITCH.md — 60-second drive-by
+
+Drop any company URL and eight Claude Agent SDK sub-agents — a researcher, five specialists, a critic, and a Porter's Value Chain strategist — scrape the public footprint, score AI maturity across 20 questions with cited evidence, and ship a 90-day roadmap in sixty seconds. It's a $1,000 audit that replaces a $50,000 Deloitte engagement, and every gap it surfaces is a $50k–$500k implementation consulting lead. The magic is the predict-then-validate hybrid: agents hypothesize scores from public evidence, a critic argues back, and a human reviewer confirms in a minute.
