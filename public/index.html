@@ -576,7 +576,8 @@
         while (true) {
             const { value, done } = await reader.read();
             if (done) break;
-            buffer += value;
+            // Normalize CRLF → LF (sse-starlette emits \r\n\r\n per SSE spec)
+            buffer += value.replace(/\r\n/g, '\n');
             let idx;
             while ((idx = buffer.indexOf('\n\n')) !== -1) {
                 const frame = buffer.slice(0, idx);
