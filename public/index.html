@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Big Four AI Maturity Audit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0a0a0a; color: #ededed; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .glass-panel { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); }
+        .loader { border: 3px solid rgba(255,255,255,0.1); border-left-color: #fff; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .gradient-text { background: linear-gradient(90deg, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-6">
+
+    <!-- HERO SECTION -->
+    <div id="hero" class="w-full max-w-3xl text-center space-y-8 transition-opacity duration-500">
+        <div class="inline-block px-3 py-1 rounded-full border border-gray-700 bg-gray-900 text-xs font-medium tracking-wide text-gray-400 uppercase mb-4">
+            Zero-Click Agentic Audit
+        </div>
+        <h1 class="text-5xl md:text-7xl font-bold tracking-tight gradient-text">Big Four AI Maturity</h1>
+        <p class="text-xl text-gray-400 max-w-2xl mx-auto">Drop your URL. Our 7-agent swarm will scrape your public footprint, score your maturity network, and map an ROI pipeline in seconds.</p>
+        
+        <form id="auditForm" class="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <input type="url" id="companyUrl" placeholder="https://yourcompany.com" required class="w-full sm:w-96 bg-gray-900 border border-gray-700 rounded-lg px-6 py-4 text-lg focus:outline-none focus:border-white transition-colors" />
+            <button type="submit" id="submitBtn" class="w-full sm:w-auto bg-white text-black font-semibold text-lg px-8 py-4 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-3">
+                <span>Launch Swarm</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </button>
+        </form>
+    </div>
+
+    <!-- TERMINAL LOADING STATE -->
+    <div id="loading" class="hidden w-full max-w-2xl mt-12 glass-panel rounded-xl p-6 font-mono text-sm text-green-400 transition-opacity">
+        <div class="flex items-center gap-3 mb-4 border-b border-gray-800 pb-4">
+            <div class="loader"></div>
+            <span class="text-white text-lg">Swarm Orchestrator Active</span>
+        </div>
+        <div id="terminalText" class="space-y-2 opacity-80">
+            <div>> Initializing Big Four framework...</div>
+        </div>
+    </div>
+
+    <!-- RESULTS DASHBOARD -->
+    <div id="results" class="hidden w-full max-w-5xl mt-12 space-y-8 animate-fade-in">
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-bold">Audit Complete.</h2>
+            <p class="text-gray-400 mt-2">Maturity mapping and integration vectors identified.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- SCORE CARD -->
+            <div class="glass-panel p-8 rounded-2xl flex flex-col items-center justify-center text-center">
+                <div class="text-sm text-gray-400 uppercase tracking-widest mb-2">Overall Maturity</div>
+                <div id="avgScore" class="text-7xl font-bold gradient-text">0.0</div>
+                <div class="text-gray-500 mt-2">out of 4.0</div>
+            </div>
+
+            <!-- HEATMAP -->
+            <div class="glass-panel p-8 rounded-2xl md:col-span-2">
+                <h3 class="text-xl font-semibold mb-6 border-b border-gray-800 pb-4">Maturity Dimensions</h3>
+                <div class="grid grid-cols-2 gap-4" id="heatmapGrid">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- PORTER'S VALUE CHAIN -->
+        <div class="glass-panel p-8 rounded-2xl">
+            <h3 class="text-xl font-semibold mb-6 border-b border-gray-800 pb-4">Value Chain Integration Targets</h3>
+            <div class="space-y-4" id="portersList">
+                <!-- Populated via JS -->
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="mt-16 text-center glass-panel p-12 rounded-2xl border-t border-white/20 bg-gradient-to-b from-white/5 to-transparent">
+            <h2 class="text-3xl font-bold text-white mb-4">Execute The Roadmap</h2>
+            <p class="text-gray-400 mb-8 max-w-xl mx-auto">You have severe gaps in your automation pipeline. Book a 30-minute technical implementation call to map the exact fixes.</p>
+            <a href="#" class="inline-block bg-white text-black font-bold text-xl px-10 py-5 rounded-xl hover:scale-105 transition-transform shadow-[0_0_40px_rgba(255,255,255,0.3)]">
+                Book $1k Strategy Call
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('auditForm');
+        const hero = document.getElementById('hero');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const terminalText = document.getElementById('terminalText');
+        const submitBtn = document.getElementById('submitBtn');
+
+        const loadingSteps = [
+            "> Spawning Specialist Agents (Strategy, Data, Tech, Talent, Governance)...",
+            "> Scraping domain footprint and SEC filings...",
+            "> Analyzing organizational topology on LinkedIn...",
+            "> Critic Agent: Challenging assigned data maturity levels...",
+            "> Synthesizer Agent: Mapping gaps to Porter's Value Chain...",
+            "> Finalizing markdown executive brief..."
+        ];
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = document.getElementById('companyUrl').value;
+            const domain = new URL(url).hostname.replace('www.', '');
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="loader"></div>';
+            hero.classList.add('opacity-50', 'pointer-events-none');
+            loading.classList.remove('hidden');
+
+            let step = 0;
+            const interval = setInterval(() => {
+                if(step < loadingSteps.length) {
+                    const el = document.createElement('div');
+                    el.textContent = loadingSteps[step];
+                    terminalText.appendChild(el);
+                    step++;
+                }
+            }, 800);
+
+            try {
+                // Hardcoded to the live Serveo backend tunnel logic
+                const API_URL = 'https://3481a70798030a75-68-2-40-190.serveousercontent.com/api/audit';
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ companyUrl: url, companyName: domain.split('.')[0].toUpperCase() })
+                });
+
+                const data = await response.json();
+                clearInterval(interval);
+
+                if (data.error) throw new Error(data.error);
+
+                document.getElementById('avgScore').textContent = data.avgScore;
+                
+                const heatmap = document.getElementById('heatmapGrid');
+                heatmap.innerHTML = '';
+                for (const [key, val] of Object.entries(data.bigFourScores)) {
+                    let color = val >= 3 ? 'text-green-400 bg-green-400/10 border-green-400/20' : 'text-amber-400 bg-amber-400/10 border-amber-400/20';
+                    heatmap.innerHTML += `
+                        <div class="p-4 rounded-lg border ${color} flex justify-between items-center">
+                            <span class="font-medium">${key}</span>
+                            <span class="text-xl font-bold">L${val}</span>
+                        </div>
+                    `;
+                }
+
+                const porters = document.getElementById('portersList');
+                porters.innerHTML = '';
+                data.portersRecommendations.forEach((rec, idx) => {
+                    porters.innerHTML += `
+                        <div class="flex gap-4 items-start p-4 bg-white/5 rounded-lg border border-white/10">
+                            <div class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center font-bold text-white shrink-0">${idx+1}</div>
+                            <div>
+                                <h4 class="text-white font-bold text-lg">${rec.activity}</h4>
+                                <p class="text-gray-400 mt-1">${rec.reason}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                loading.classList.add('hidden');
+                hero.classList.add('hidden');
+                results.classList.remove('hidden');
+
+            } catch(e) {
+                clearInterval(interval);
+                terminalText.innerHTML += `<div class="text-red-500">> Error: Connection to Swarm failed. ${e.message}</div>`;
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Try Again';
+            }
+        });
+    </script>
+</body>
+</html>
