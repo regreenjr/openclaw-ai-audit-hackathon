@@ -431,3 +431,155 @@ async def run_audit(
         raise
     finally:
         await bus.close()
+
+
+# =============================================================================
+# Combined report — fuses scraped agent output with user quiz answers
+# =============================================================================
+
+def _merge_scraped_and_quiz(
+    scraped_answers: dict[str, dict[str, Any]],
+    quiz_answers: dict[str, int],
+) -> dict[str, dict[str, Any]]:
+    """Merge rules:
+    - User quiz answer is authoritative (level 1-4 overrides the agent prediction)
+    - User "Don't know" (level 0) → fall back to scraped level, flag discovery_needed
+    - If scraped is missing (edge case) → use user answer as-is
+
+    Evidence/stem/dimension are preserved from the scraped record for citation.
+    """
+    merged: dict[str, dict[str, Any]] = {}
+    all_qids = set(scraped_answers.keys()) | set(quiz_answers.keys())
+    for qid in all_qids:
+        scraped = scraped_answers.get(qid, {})
+        user_level = quiz_answers.get(qid)
+
+        base = {
+            "dimension": scraped.get("dimension", ""),
+            "stem": scraped.get("stem", ""),
+            "evidence": scraped.get("evidence", []),
+            "scraped_level": scraped.get("level"),
+            "scraped_confidence": scraped.get("confidence"),
+        }
+
+        if user_level is None:
+            # No quiz answer recorded — use scraped prediction
+            merged[qid] = {
+                **base,
+                "level": scraped.get("level", 1),
+                "confidence": scraped.get("confidence", 0.0),
+                "discovery_needed": bool(scraped.get("discovery_needed")),
+                "source": "scraped_only",
+                "confirmed_by_user": False,
+            }
+        elif user_level == 0:
+            # User selected "Don't know" — scraped fallback + discovery flag
+            merged[qid] = {
+                **base,
+                "level": scraped.get("level", 1) or 1,
+                "confidence": 0.3,
+                "discovery_needed": True,
+                "source": "user_dont_know",
+                "confirmed_by_user": False,
+            }
+        else:
+            # User answered — their answer wins
+            merged[qid] = {
+                **base,
+                "level": user_level,
+                "confidence": 1.0,  # user-confirmed
+                "discovery_needed": False,
+                "source": "user_quiz",
+                "confirmed_by_user": True,
+                "agreed_with_agent": scraped.get("level") == user_level,
+            }
+    return merged
+
+
+async def run_combined_report(session_id: str, bus: EventBus) -> dict[str, Any]:
+    """Chunk H — fuses scraped agent output with user quiz answers into a final report.
+
+    Phases emitted for UI streaming:
+    1. combined.merging       — deterministic merge of scraped + quiz
+    2. combined.scoring       — re-run scoring math on merged answer set
+    3. combined.synthesizing  — synthesizer + value_chain in parallel on combined scorecard
+    4. combined.complete      — persist + return
+    """
+    await bus.emit(AuditEvent(type="combined.start", agent="combiner",
+                              data={"session_id": session_id}))
+
+    session = db.get_session(session_id)
+    if not session:
+        await bus.emit(AuditEvent(type="combined.error", agent="combiner",
+                                  data={"error": f"Session {session_id} not found"}))
+        raise ValueError(f"Session {session_id} not found")
+
+    scraped_answers = session.get("scraped_answers") or {}
+    quiz_answers = session.get("quiz_answers") or {}
+    screener = session.get("screener") or {}
+
+    if not scraped_answers:
+        raise ValueError("Session has no scraped_answers — run audit first")
+    if not quiz_answers:
+        raise ValueError("Session has no quiz_answers — submit quiz first")
+
+    # Phase 1: merge
+    await bus.emit(AuditEvent(type="combined.phase", agent="combiner",
+                              data={"phase": "merging scraped + quiz answers"}))
+    merged_answers = _merge_scraped_and_quiz(scraped_answers, quiz_answers)
+
+    confirmed = sum(1 for a in merged_answers.values() if a.get("confirmed_by_user"))
+    discovery = sum(1 for a in merged_answers.values() if a.get("discovery_needed"))
+    agreed = sum(1 for a in merged_answers.values() if a.get("agreed_with_agent"))
+    await bus.emit(AuditEvent(type="combined.merged", agent="combiner", data={
+        "total_questions": len(merged_answers),
+        "user_confirmed": confirmed,
+        "agreed_with_agent": agreed,
+        "discovery_needed": discovery,
+    }))
+
+    # Phase 2: re-score
+    await bus.emit(AuditEvent(type="combined.phase", agent="combiner",
+                              data={"phase": "scoring merged answers"}))
+    combined_scorecard = scoring.compute_report(
+        merged_answers,
+        priority_function=screener.get("priority_function", ""),
+    )
+    await bus.emit(AuditEvent(type="scorecard", agent="combiner",
+                              data={**combined_scorecard, "source": "combined"}))
+
+    # Phase 3: synthesizer + value_chain in parallel using the combined scorecard
+    await bus.emit(AuditEvent(type="combined.phase", agent="combiner",
+                              data={"phase": "synthesizer + value_chain (parallel)"}))
+    combined_narrative, combined_value_chain_plays = await asyncio.gather(
+        run_synthesizer(combined_scorecard, merged_answers, screener, bus),
+        run_value_chain_strategist(combined_scorecard, screener, {}, bus),
+    )
+
+    # Phase 4: persist
+    db.update_combined(
+        session_id=session_id,
+        combined_scorecard=combined_scorecard,
+        combined_narrative=combined_narrative,
+        combined_value_chain_plays=combined_value_chain_plays,
+    )
+
+    result = {
+        "session_id": session_id,
+        "source": "combined",
+        "answers": merged_answers,
+        "scorecard": combined_scorecard,
+        "narrative": combined_narrative,
+        "value_chain_plays": combined_value_chain_plays,
+        "fusion_stats": {
+            "total_questions": len(merged_answers),
+            "user_confirmed": confirmed,
+            "agreed_with_agent": agreed,
+            "discovery_needed": discovery,
+        },
+    }
+    await bus.emit(AuditEvent(type="combined.complete", agent="combiner", data={
+        "overall_score": combined_scorecard["overall_score"],
+        "session_id": session_id,
+    }))
+    return result

@@ -73,6 +73,47 @@ async def submit_quiz(session_id: str, submission: QuizSubmission) -> dict[str, 
     return {"session_id": session_id, "status": "quizzed"}
 
 
+@app.post("/api/combined-report/{session_id}")
+async def combined_report_oneshot(session_id: str) -> dict[str, Any]:
+    """Fuse scraped agent output with user quiz answers → final combined report.
+    Blocks until complete. Returns the full fused report JSON."""
+    bus = EventBus()
+    drain_task = asyncio.create_task(_drain(bus))
+    try:
+        result = await orchestrator.run_combined_report(session_id, bus)
+        await bus.close()
+        await drain_task
+        return result
+    except Exception as e:
+        await bus.close()
+        return {"error": str(e), "session_id": session_id}
+
+
+@app.post("/api/combined-report/{session_id}/stream")
+async def combined_report_stream(session_id: str):
+    """SSE variant of the combined-report endpoint — stream events as the combiner runs."""
+    bus = EventBus()
+
+    async def pipeline():
+        try:
+            await orchestrator.run_combined_report(session_id, bus)
+        except Exception:
+            pass
+        finally:
+            await bus.close()
+
+    async def event_gen():
+        task = asyncio.create_task(pipeline())
+        try:
+            async for ev in bus.stream():
+                yield {"event": ev.type, "data": ev.to_sse().removeprefix("data: ").rstrip()}
+        finally:
+            if not task.done():
+                task.cancel()
+
+    return EventSourceResponse(event_gen())
+
+
 @app.get("/")
 async def root() -> dict[str, str]:
     return {

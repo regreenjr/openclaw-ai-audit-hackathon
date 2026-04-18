@@ -918,6 +918,7 @@
         btn.disabled = true;
         btn.innerHTML = '<div class="loader"></div><span>Saving...</span>';
         try {
+            // 1) Save quiz answers
             const r = await fetch(`${API_URL}/api/quiz/${currentSessionId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -925,25 +926,105 @@
             });
             const out = await r.json();
             if (out.error) throw new Error(out.error);
-            // Success splash — combined-report generation will replace this in Chunk H
-            document.getElementById('quizView').innerHTML = `
-                <div class="glass-panel p-12 rounded-2xl text-center">
-                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 mb-4">
-                        <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+
+            // 2) Swap quiz view for a "combining" status panel
+            const quizView = document.getElementById('quizView');
+            quizView.innerHTML = `
+                <div class="glass-panel p-10 rounded-2xl text-center space-y-4">
+                    <div class="inline-flex items-center gap-3">
+                        <div class="loader"></div>
+                        <h2 id="combiningLabel" class="text-2xl font-semibold">Fusing agents + self-assessment…</h2>
                     </div>
-                    <h2 class="text-3xl font-bold mb-3">Self-assessment saved</h2>
-                    <p class="text-gray-400 mb-2">Session <code class="text-xs bg-black/40 px-2 py-1 rounded">${currentSessionId.slice(0,8)}...</code></p>
-                    <p class="text-sm text-gray-500 mb-6">Combined-report generator is next (Chunk H). For now, your answers are saved in Supabase.</p>
-                    <button type="button" onclick="window.location.reload()" class="inline-flex items-center gap-2 bg-white text-black font-medium px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors">
-                        Run another audit
-                    </button>
+                    <p class="text-gray-400 text-sm">The combiner is merging your 20 answers with the scraped evidence and re-scoring. Synthesizer and Value Chain strategist are re-running on the combined scorecard.</p>
+                    <div id="combiningTerminal" class="bg-black/40 rounded-lg p-4 font-mono text-xs text-left max-h-48 overflow-y-auto"></div>
                 </div>
             `;
+
+            // 3) Stream the combined report events
+            await streamCombinedReport();
         } catch (err) {
             btn.disabled = false;
             btn.innerHTML = '<span>Generate Combined Report</span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>';
             alert('Submit failed: ' + err.message);
         }
+    }
+
+    function combiningLine(text, color = 'text-emerald-300') {
+        const term = document.getElementById('combiningTerminal');
+        if (!term) return;
+        const el = document.createElement('div');
+        el.className = `${color} fade-in`;
+        el.textContent = text;
+        term.appendChild(el);
+        term.scrollTop = term.scrollHeight;
+    }
+
+    async function streamCombinedReport() {
+        const res = await fetch(`${API_URL}/api/combined-report/${currentSessionId}/stream`, { method: 'POST' });
+        if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+        const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+        let buffer = '';
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += value.replace(/\r\n/g, '\n');
+            let idx;
+            while ((idx = buffer.indexOf('\n\n')) !== -1) {
+                const frame = buffer.slice(0, idx);
+                buffer = buffer.slice(idx + 2);
+                const dataLines = frame.split('\n').filter(l => l.startsWith('data: '));
+                if (!dataLines.length) continue;
+                try {
+                    handleCombinedEvent(JSON.parse(dataLines.map(l => l.slice(6)).join('\n')));
+                } catch (e) { console.warn('combined parse fail', e); }
+            }
+        }
+    }
+
+    function handleCombinedEvent(ev) {
+        const { type, agent, data } = ev;
+        const label = document.getElementById('combiningLabel');
+
+        if (type === 'combined.start') {
+            combiningLine('> combiner started', 'text-emerald-400');
+        } else if (type === 'combined.phase') {
+            if (label) label.textContent = `Phase: ${data.phase}`;
+            combiningLine(`> phase: ${data.phase}`, 'text-emerald-400');
+        } else if (type === 'combined.merged') {
+            combiningLine(`  merged: ${data.user_confirmed}/${data.total_questions} user-confirmed · ${data.agreed_with_agent} agreed with agents · ${data.discovery_needed} flagged for discovery`, 'text-cyan-300');
+        } else if (type === 'agent.start' || type === 'agent.done') {
+            combiningLine(`  ${agent}: ${type.replace('agent.','')}${data && data.cost_usd ? ' ($' + data.cost_usd.toFixed(3) + ')' : ''}`, 'text-gray-400');
+        } else if (type === 'agent.thought') {
+            if (data && data.text) combiningLine(`  ${agent}: ${data.text}`, 'text-gray-500');
+        } else if (type === 'scorecard') {
+            // Reveal the final report UI using the existing render functions
+            showCombinedReport();
+            renderScorecard(data);
+        } else if (type === 'narrative') {
+            renderNarrative(data);
+        } else if (type === 'value_chain') {
+            renderValueChain(data.plays || []);
+        } else if (type === 'combined.complete') {
+            combiningLine(`> complete — combined maturity ${data.overall_score}/4.0`, 'text-emerald-400');
+            // Hide the combining panel, scroll to results
+            const quizView = document.getElementById('quizView');
+            if (quizView) quizView.classList.add('hidden');
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else if (type === 'combined.error') {
+            combiningLine(`! error: ${data.error}`, 'text-rose-400');
+        }
+    }
+
+    function showCombinedReport() {
+        // Hide the audit-phase CTA panel (the "Continue to Self-Assessment" one is no longer needed)
+        const ctaPanel = document.getElementById('continueToQuizPanel');
+        if (ctaPanel) ctaPanel.classList.add('hidden');
+        // Swap the results headline + subtitle
+        const h2 = document.querySelector('#results .text-center h2');
+        const sub = document.getElementById('resultsSubtitle');
+        if (h2) h2.textContent = 'Combined Report';
+        if (sub) sub.textContent = 'Agents + your self-assessment fused. Every answer is user-confirmed or flagged for discovery.';
+        document.getElementById('results').classList.remove('hidden');
     }
 
     // Wire quiz buttons
