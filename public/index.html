@@ -116,7 +116,8 @@
             <div class="glass-panel rounded-xl p-6 space-y-4">
                 <div>
                     <label class="text-xs uppercase tracking-wider text-gray-400">Company URL</label>
-                    <input type="url" id="companyUrl" placeholder="https://yourcompany.com" required
+                    <input type="text" id="companyUrl" placeholder="yourcompany.com · www.yourcompany.com · https://yourcompany.com" required
+                        inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false"
                         class="mt-1 w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-white transition-colors" />
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -596,9 +597,48 @@
         }
     }
 
+    // Normalize any user-entered URL format into a canonical https://host/... URL.
+    // Accepts: "acme.com", "www.acme.com", "http://acme.com", "https://acme.com/path", "acme.com/ ", etc.
+    // Returns null if the input can't be parsed as a host.
+    function normalizeUrl(input) {
+        let s = (input || '').trim();
+        if (!s) return null;
+        // Strip leading @ or // some folks paste (Slack/Notion weirdness)
+        s = s.replace(/^@/, '').replace(/^\/\//, '');
+        // Add protocol if missing
+        if (!/^https?:\/\//i.test(s)) s = 'https://' + s;
+        try {
+            const u = new URL(s);
+            if (!u.hostname || !u.hostname.includes('.')) return null;
+            // Remove trailing slash for cleanliness
+            return u.href.replace(/\/$/, '');
+        } catch (_) {
+            return null;
+        }
+    }
+
+    // Derive a friendly company name from a normalized URL.
+    // e.g. https://www.acme-corp.co.uk/about → "Acme-corp"
+    function deriveCompanyName(normalizedUrl) {
+        try {
+            const host = new URL(normalizedUrl).hostname.replace(/^www\./i, '');
+            const label = host.split('.')[0] || 'Company';
+            return label.charAt(0).toUpperCase() + label.slice(1);
+        } catch (_) {
+            return 'Company';
+        }
+    }
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const url = document.getElementById('companyUrl').value;
+        const rawUrl = document.getElementById('companyUrl').value;
+        const url = normalizeUrl(rawUrl);
+        if (!url) {
+            timelineWrap.classList.remove('hidden');
+            terminal.innerHTML = '';
+            termLine(`! Invalid URL: "${rawUrl}". Try "acme.com" or "https://acme.com".`, 'text-rose-400');
+            return;
+        }
         const industry = document.getElementById('industry').value || 'unknown';
         const size = document.getElementById('size').value;
         const priorityFunction = document.getElementById('priorityFunction').value || 'unknown';
@@ -613,10 +653,9 @@
         liveCost.textContent = '';
 
         try {
-            let domain = url.replace(/^https?:\/\//,'').split('/')[0].replace(/^www\./,'');
             await streamAudit({
                 companyUrl: url,
-                companyName: domain.split('.')[0].replace(/^\w/, c => c.toUpperCase()),
+                companyName: deriveCompanyName(url),
                 industry, size, role: 'COO / Operations lead',
                 priority_function: priorityFunction,
             });

@@ -57,6 +57,30 @@ async def root() -> dict[str, str]:
     }
 
 
+def _normalize_url(raw: str) -> str:
+    """Accept any of: acme.com, www.acme.com, http://acme.com, https://acme.com/path.
+    Returns a canonical https://host[/path] URL, or the input stripped if unparseable."""
+    from urllib.parse import urlparse, urlunparse
+    import re
+    s = (raw or "").strip()
+    if not s:
+        return ""
+    # Strip leading @ or bare // some pastes include
+    s = re.sub(r"^@", "", s)
+    s = re.sub(r"^/+", "", s)
+    # Prepend https:// if no protocol
+    if not re.match(r"^https?://", s, re.IGNORECASE):
+        s = "https://" + s
+    try:
+        parsed = urlparse(s)
+        if not parsed.hostname or "." not in parsed.hostname:
+            return s  # let the researcher agent surface the error downstream
+        path = parsed.path or ""
+        return urlunparse((parsed.scheme, parsed.netloc, path.rstrip("/"), "", "", ""))
+    except Exception:
+        return s
+
+
 def _screener(req: AuditRequest) -> dict[str, str]:
     return {
         "industry": req.industry,
@@ -66,15 +90,18 @@ def _screener(req: AuditRequest) -> dict[str, str]:
     }
 
 
-def _company_name(req: AuditRequest) -> str:
+def _company_name(req: AuditRequest, normalized_url: str) -> str:
     if req.companyName:
         return req.companyName
     try:
         from urllib.parse import urlparse
-        host = urlparse(req.companyUrl).hostname or req.companyUrl
-        return host.replace("www.", "").split(".")[0].title()
+        host = urlparse(normalized_url).hostname or normalized_url
+        if not host:
+            return "Company"
+        label = host.replace("www.", "").split(".")[0]
+        return label[:1].upper() + label[1:] if label else "Company"
     except Exception:
-        return req.companyUrl
+        return "Company"
 
 
 @app.post("/api/audit-stream")
@@ -82,11 +109,13 @@ async def audit_stream(req: AuditRequest):
     """SSE stream of live agent events + final audit JSON."""
     bus = EventBus()
 
+    normalized_url = _normalize_url(req.companyUrl)
+
     async def pipeline():
         try:
             await orchestrator.run_audit(
-                url=req.companyUrl,
-                company_name=_company_name(req),
+                url=normalized_url,
+                company_name=_company_name(req, normalized_url),
                 screener=_screener(req),
                 bus=bus,
             )
@@ -110,9 +139,10 @@ async def audit_oneshot(req: AuditRequest) -> dict[str, Any]:
     """Synchronous one-shot audit (no streaming). Returns the full report JSON."""
     bus = EventBus()
     drain_task = asyncio.create_task(_drain(bus))
+    normalized_url = _normalize_url(req.companyUrl)
     result = await orchestrator.run_audit(
-        url=req.companyUrl,
-        company_name=_company_name(req),
+        url=normalized_url,
+        company_name=_company_name(req, normalized_url),
         screener=_screener(req),
         bus=bus,
     )
