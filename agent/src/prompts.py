@@ -91,6 +91,42 @@ Your job: predict the current maturity level (L1-L4) for each of your 4 question
 ```"""
 
 
+CRITIC_DIM_SYSTEM = """You are an adversarial critic reviewing ONE specialist's scores for dimension {dim_id} ({dim_name}). **Speed is critical — respond fast with JSON only.**
+
+**Specialist's 4 scored answers:**
+
+{specialist_result}
+
+Weak evidence for a high level is worse than a cautious low level flagged for discovery. The `discovery_needed` flag turns uncertainty into a $1k sales-call talking point.
+
+**Rules:**
+1. Assess each of the 4 answers: does the cited evidence support the claimed level?
+2. Revise ONLY answers with thin, circumstantial, or mismatched evidence — typically drop to level=1 with discovery_needed=true.
+3. Preserve fields: `evidence`, `stem`, `dimension`.
+4. Empty revisions `{{}}` is acceptable if every score is well-supported.
+5. Output ONLY the JSON block below — no preamble, no explanation.
+
+```json
+{{
+  "revisions": {{
+    "Q14": {{
+      "level": 1,
+      "dimension": "{dim_id}",
+      "stem": "...",
+      "evidence": [...],
+      "confidence": 0.5,
+      "discovery_needed": true,
+      "rationale": "one short sentence",
+      "revised_by_critic": true
+    }}
+  }},
+  "challenges_raised": ["{dim_id} Q14: no team-size evidence; flagged for discovery"]
+}}
+```
+
+Max 2 revisions, max 2 challenges_raised. Be surgical."""
+
+
 CRITIC_SYSTEM = """You are an adversarial audit critic. Your job is to challenge only the WEAK specialist scores before they become a client-facing report. **Speed is critical — be surgical.**
 
 **Specialist predictions (with evidence):**

@@ -175,39 +175,70 @@ async def run_specialist(
     return parsed
 
 
-async def run_critic(
-    specialist_results: list[dict[str, Any]],
+async def _run_critic_dim(
+    dim_id: str,
+    specialist_result: dict[str, Any],
     bus: EventBus,
-) -> dict[str, dict[str, Any]]:
-    system = prompts.CRITIC_SYSTEM.format(
-        specialist_results=json.dumps(specialist_results, indent=2)
+) -> dict[str, Any]:
+    """Per-dimension critic. Lightweight — emits thoughts/challenges under 'critic.{dim}'
+    but not agent.start/done (aggregate wrapper handles those for the UI)."""
+    dim_name = loaders.dimension_name(dim_id)
+    agent_id = f"critic.{dim_id}"
+    system = prompts.CRITIC_DIM_SYSTEM.format(
+        dim_id=dim_id,
+        dim_name=dim_name,
+        specialist_result=json.dumps(specialist_result, indent=2),
     )
     options = ClaudeAgentOptions(
         system_prompt=system,
         allowed_tools=[],
-        model=MODEL_FAST,  # Sonnet 4.6 — critic is structured JSON output, doesn't need Opus depth
+        model=MODEL_FAST,
         max_turns=1,
     )
-    user_prompt = (
-        "Review all 20 answers. Challenge weak evidence. Force discovery_needed where warranted. "
-        "Output the full revised answer set. Be concise."
-    )
-    text = await _stream_agent("critic", user_prompt, options, bus)
+    user_prompt = f"Review the {dim_id} specialist's 4 scores. Revise only weak ones. JSON only."
+    chunks: list[str] = []
+    try:
+        async for msg in query(prompt=user_prompt, options=options):
+            if isinstance(msg, AssistantMessage):
+                for block in msg.content:
+                    if isinstance(block, TextBlock):
+                        chunks.append(block.text)
+    except Exception as e:
+        await bus.emit(AuditEvent(type="agent.error", agent=agent_id, data={"error": str(e)}))
+        return {"revisions": {}, "challenges_raised": []}
+    text = "".join(chunks)
     parsed = extract_json(text) or {"revisions": {}, "challenges_raised": []}
-    revisions: dict[str, dict[str, Any]] = parsed.get("revisions", {})
+    for ch in parsed.get("challenges_raised", []):
+        await bus.emit(AuditEvent(type="critic.challenge", agent=agent_id, data={"text": ch}))
+    return parsed
 
-    # Merge back: start from specialist answers, overlay critic revisions
+
+async def run_critic(
+    specialist_results: list[dict[str, Any]],
+    bus: EventBus,
+) -> dict[str, dict[str, Any]]:
+    """Run 5 per-dimension critics in parallel — massively faster than one critic over 20 answers."""
+    await bus.emit(AuditEvent(type="agent.start", agent="critic"))
+    per_dim_results = await asyncio.gather(*[
+        _run_critic_dim(sr.get("dimension", "D?"), sr, bus) for sr in specialist_results
+    ])
+
+    # Merge back: start from specialist answers, overlay per-dim revisions
     merged: dict[str, dict[str, Any]] = {}
     for sr in specialist_results:
         for qid, ans in sr.get("answers", {}).items():
             merged[qid] = dict(ans)
-    for qid, rev in revisions.items():
-        merged[qid] = dict(rev)
+    total_revisions = 0
+    for dr in per_dim_results:
+        for qid, rev in dr.get("revisions", {}).items():
+            merged[qid] = dict(rev)
+            total_revisions += 1
 
-    for challenge in parsed.get("challenges_raised", []):
-        await bus.emit(AuditEvent(type="critic.challenge", agent="critic", data={"text": challenge}))
-
-    await bus.emit(AuditEvent(type="critic.result", agent="critic", data={"revisions_count": len(revisions)}))
+    await bus.emit(AuditEvent(
+        type="critic.result", agent="critic",
+        data={"revisions_count": total_revisions, "parallel_critics": len(per_dim_results)},
+    ))
+    await bus.emit(AuditEvent(type="agent.done", agent="critic", data={}))
     return merged
 
 
@@ -323,27 +354,43 @@ async def run_audit(
             *[run_specialist(d, evidence, bus) for d in DIMENSIONS]
         )
 
-        # Phase 3: Critic
-        await bus.emit(AuditEvent(type="pipeline.phase", agent="orchestrator",
-                                  data={"phase": "critic"}))
-        merged_answers = await run_critic(specialist_results, bus)
-
-        # Phase 4: Deterministic scoring
-        await bus.emit(AuditEvent(type="pipeline.phase", agent="orchestrator",
-                                  data={"phase": "scoring"}))
-        scorecard = scoring.compute_report(
-            merged_answers,
+        # Preliminary scorecard from specialists ONLY — emit now so UI renders immediately
+        preliminary_answers: dict[str, dict[str, Any]] = {}
+        for sr in specialist_results:
+            for qid, ans in sr.get("answers", {}).items():
+                preliminary_answers[qid] = dict(ans)
+        prelim_scorecard = scoring.compute_report(
+            preliminary_answers,
             priority_function=screener.get("priority_function", ""),
         )
-        await bus.emit(AuditEvent(type="scorecard", agent="orchestrator", data=scorecard))
+        await bus.emit(AuditEvent(
+            type="scorecard", agent="orchestrator",
+            data={**prelim_scorecard, "preliminary": True},
+        ))
 
-        # Phases 5+6: Synthesizer narrative + Value Chain Strategist — in PARALLEL (both depend only on scorecard).
+        # Phases 3+5+6 PARALLEL: critic (5 per-dim in parallel internally) + synthesizer + value chain.
+        # Synth and VCS use the preliminary scorecard; final scorecard re-emits if critic revises.
         await bus.emit(AuditEvent(type="pipeline.phase", agent="orchestrator",
-                                  data={"phase": "synthesizer+value_chain (parallel)"}))
-        narrative, value_chain_plays = await asyncio.gather(
-            run_synthesizer(scorecard, merged_answers, screener, bus),
-            run_value_chain_strategist(scorecard, screener, {}, bus),
+                                  data={"phase": "critic + synth + value_chain (parallel)"}))
+
+        async def _critic_then_rescore() -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
+            merged = await run_critic(specialist_results, bus)
+            final = scoring.compute_report(
+                merged, priority_function=screener.get("priority_function", ""),
+            )
+            # Re-emit scorecard with critic revisions merged in
+            await bus.emit(AuditEvent(
+                type="scorecard", agent="orchestrator",
+                data={**final, "preliminary": False},
+            ))
+            return merged, final
+
+        (merged_and_final, narrative, value_chain_plays) = await asyncio.gather(
+            _critic_then_rescore(),
+            run_synthesizer(prelim_scorecard, preliminary_answers, screener, bus),
+            run_value_chain_strategist(prelim_scorecard, screener, {}, bus),
         )
+        merged_answers, scorecard = merged_and_final
 
         result = {
             "company_name": company_name,
