@@ -14,9 +14,16 @@ if [[ ! -f "$TUNNEL_LOG" ]]; then
   exit 1
 fi
 
-# Extract the most recent https://*.serveousercontent.com URL from the tunnel log.
-# Strip ANSI color codes first.
-TUNNEL_URL="$(grep -oE "https://[a-f0-9]+-[0-9]+-[0-9]+-[0-9]+-[0-9]+\.serveousercontent\.com" "$TUNNEL_LOG" | tail -1 || true)"
+# Extract the most recent tunnel URL from the tunnel log.
+# Supports both cloudflared (*.trycloudflare.com) and legacy serveo (*.serveousercontent.com).
+TUNNEL_URL="$(
+  { grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$TUNNEL_LOG" || true; } | tail -1
+)"
+if [[ -z "$TUNNEL_URL" ]]; then
+  TUNNEL_URL="$(
+    { grep -oE 'https://[a-f0-9]+-[0-9]+-[0-9]+-[0-9]+-[0-9]+\.serveousercontent\.com' "$TUNNEL_LOG" || true; } | tail -1
+  )"
+fi
 if [[ -z "$TUNNEL_URL" ]]; then
   echo "[sync-tunnel] ERROR: no tunnel URL found in $TUNNEL_LOG" >&2
   exit 1

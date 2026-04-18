@@ -342,7 +342,7 @@
     <script>
     // Current tunnel URL baked in at deploy time — updated each ./start.sh restart.
     // Chain of precedence: ?api=... query param > window override > localStorage > baked default.
-    const DEFAULT_API_URL = "https://94a92eb7545e46a0-70-167-111-226.serveousercontent.com";
+    const DEFAULT_API_URL = "https://sophisticated-knives-pope-bench.trycloudflare.com";
     (() => {
         const p = new URLSearchParams(window.location.search).get('api');
         if (p) { localStorage.setItem('gapstone_api_url', p.replace(/\/$/, '')); }

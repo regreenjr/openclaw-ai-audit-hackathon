@@ -46,6 +46,7 @@ PORT="${PORT:-8787}"
 say "Killing any existing server/tunnel processes..."
 pkill -f "uvicorn src.server" >/dev/null 2>&1 || true
 pkill -f "ssh.*serveo" >/dev/null 2>&1 || true
+pkill -f "cloudflared tunnel" >/dev/null 2>&1 || true
 rm -f "$SERVER_PID_FILE" "$TUNNEL_PID_FILE" "$SERVER_LOG" "$TUNNEL_LOG"
 sleep 1
 
@@ -69,24 +70,25 @@ done
 [ "$ok" = "1" ] || { tail -n 30 "$SERVER_LOG" >&2; die "Server did not become healthy. See $SERVER_LOG"; }
 say "Server healthy (pid $SERVER_PID)."
 
-# --- 6. Start serveo tunnel ---------------------------------------------
-say "Starting serveo tunnel ..."
-ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 \
-  -R 80:localhost:"$PORT" serveo.net > "$TUNNEL_LOG" 2>&1 &
+# --- 6. Start cloudflared tunnel ----------------------------------------
+# Cloudflare-issued certs are browser-trusted; serveo's self-signed certs
+# got rejected with ERR_CERT_AUTHORITY_INVALID on some browsers.
+say "Starting cloudflared tunnel ..."
+if ! command -v cloudflared >/dev/null 2>&1; then
+  die "cloudflared not found. Install: brew install cloudflared"
+fi
+nohup cloudflared tunnel --url "http://localhost:$PORT" > "$TUNNEL_LOG" 2>&1 &
 TUNNEL_PID=$!
 echo "$TUNNEL_PID" > "$TUNNEL_PID_FILE"
 
 # --- 7. Poll tunnel log for URL -----------------------------------------
-# Serveo's "Forwarding HTTP traffic from <url>" line is what we want.
-# The URL is on *.serveousercontent.com (not serveo.net, which is their dashboard).
-# ANSI color codes are in the log — strip them before matching.
-say "Waiting for tunnel URL (up to 15s)..."
+# cloudflared prints "https://<words>.trycloudflare.com" once the tunnel is up.
+say "Waiting for tunnel URL (up to 20s)..."
 TUNNEL_URL=""
-for _ in $(seq 1 30); do
+for _ in $(seq 1 40); do
   if [ -s "$TUNNEL_LOG" ]; then
     TUNNEL_URL="$(
-      sed -E 's/\x1b\[[0-9;]*m//g' "$TUNNEL_LOG" \
-      | grep -Eo 'https://[A-Za-z0-9.-]+\.serveousercontent\.com' \
+      grep -Eo 'https://[a-z0-9-]+\.trycloudflare\.com' "$TUNNEL_LOG" \
       | head -n1 || true
     )"
     [ -n "$TUNNEL_URL" ] && break
