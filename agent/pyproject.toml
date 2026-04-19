@@ -1,7 +1,7 @@
 [project]
 name = "openclaw-audit-agent"
 version = "0.1.0"
-description = "Multi-agent AI maturity audit backend (Claude Agent SDK)"
+description = "Multi-agent AI readiness audit backend (Claude Agent SDK)"
 requires-python = ">=3.11"
 dependencies = [
     "claude-agent-sdk>=0.1.0",

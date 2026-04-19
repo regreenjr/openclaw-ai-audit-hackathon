@@ -1,6 +1,6 @@
 # Openclaw AI Audit
 
-$1,000 AI-maturity audit for SMBs, built on a swarm of Openclaw/Claude sub-agents that pre-fill the questionnaire from a company's public footprint.
+$1,000 AI-readiness audit for SMBs, built on a swarm of Openclaw/Claude sub-agents that pre-fill the questionnaire from a company's public footprint.
 
 See `CLAUDE.md` for product pitch, architecture, framework, and scoring rules.
 

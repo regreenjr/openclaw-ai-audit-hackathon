@@ -171,7 +171,7 @@ function buildNarrative(companyName, overall, dimScores) {
     D5: "Use Cases & Adoption",
   };
   return {
-    exec_summary: `${companyName} is operating at an overall AI maturity of ${overall.toFixed(1)}/4.0 — largely ${
+    exec_summary: `${companyName} is operating at an overall AI readiness of ${overall.toFixed(1)}/4.0 — largely ${
       overall < 1.75 ? "ad-hoc with isolated experimentation" :
       overall < 2.5  ? "experimental with pockets of repeatable usage" :
       overall < 3.25 ? "operational with clear AI workflows in place" :

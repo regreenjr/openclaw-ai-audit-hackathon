@@ -1,8 +1,8 @@
-# DEMO.md — Openclaw AI Maturity Audit
+# DEMO.md — Openclaw AI Readiness Audit
 
 ## Elevator pitch (30 seconds)
 
-Drop any company URL and watch eight Claude Agent SDK sub-agents light up in parallel. A researcher scrapes the public footprint, five specialists each score one dimension of AI maturity against cited evidence, a critic challenges weak scores, a Porter's Value Chain strategist maps AI leverage points to the business, and a synthesizer writes the narrative. Sixty seconds later: a scored 5×4 heatmap, the top 5 gaps with evidence quotes, a 90-day roadmap, and a Value Chain deployment plan. A $1,000 audit that replaces a $50,000 Deloitte engagement — and becomes the top of funnel for $50k–$500k implementation consulting.
+Drop any company URL and watch eight Claude Agent SDK sub-agents light up in parallel. A researcher scrapes the public footprint, five specialists each score one dimension of AI readiness against cited evidence, a critic challenges weak scores, a Porter's Value Chain strategist maps AI leverage points to the business, and a synthesizer writes the narrative. Sixty seconds later: a scored 5×4 heatmap, the top 5 gaps with evidence quotes, a 90-day roadmap, and a Value Chain deployment plan. A $1,000 audit that replaces a $50,000 Deloitte engagement — and becomes the top of funnel for $50k–$500k implementation consulting.
 
 ## 2-minute demo script
 
@@ -12,7 +12,7 @@ Drop any company URL and watch eight Claude Agent SDK sub-agents light up in par
 | "Eight sub-agents just started. The researcher is scraping the public footprint right now — you can see the actual `fetch_url` tool calls streaming in the terminal. This is the Claude Agent SDK running real MCP tool use, not a mock." *(0:15–0:35)* | Agent cards grid pulses yellow for `researcher`. Terminal streams `researcher → fetch_url({"url":"https://anthropic.com/research"})`, then `/careers`, `/company`. Evidence dossier JSON fills in. |
 | "Now five specialists spin up in parallel — one per dimension. Strategy, Data, People, Governance, Use Cases. Each gets the evidence dossier and a different slice of the rubric. They run concurrently via `asyncio.gather`." *(0:35–0:60)* | Five specialist cards turn yellow simultaneously. Terminal shows interleaved `specialist.D1 thought:`, `specialist.D2 thought:`. Phase label reads `specialists × 5`. |
 | "Watch the critic. It just flagged that the Governance score has thin evidence — see the purple challenge line — and it's going to force a `discovery_needed` flag. That uncertainty becomes a talking point on the sales call, not a blind guess in the report." *(1:00–1:20)* | Critic card activates. Fuchsia terminal line: `critic ⚡ D4 Q14: no public AI policy found — recommend discovery_needed`. Specialist cards turn green. |
-| "Scorecard drops. 5×4 heatmap. Overall maturity 3.4. Top 5 gaps ranked by how far they are from target, weighted toward the priority function the user gave us. Every gap has an evidence citation you can click." *(1:20–1:45)* | Overall score counts up to `3.4`. Heatmap paints L1–L4 cells with color coding. Top 5 Gaps list expands with evidence disclosures. |
+| "Scorecard drops. 5×4 heatmap. Overall readiness 3.4. Top 5 gaps ranked by how far they are from target, weighted toward the priority function the user gave us. Every gap has an evidence citation you can click." *(1:20–1:45)* | Overall score counts up to `3.4`. Heatmap paints L1–L4 cells with color coding. Top 5 Gaps list expands with evidence disclosures. |
 | "Last agent — the Value Chain strategist — overlays Porter's primary and support activities on top of the scores. This tells Anthropic's COO exactly where in their operation AI creates leverage. Ninety-day roadmap ships. Done in one minute, one cent per agent call." *(1:45–2:00)* | Porter's Value Chain panel renders with activity-level recommendations. 90-day roadmap fills 30/60/90-day columns. Live cost reads `~$0.08`. Book $1k Strategy Call CTA appears. |
 
 ## Why this wins — mapped to 4 criteria
@@ -29,7 +29,7 @@ Drop any company URL and watch eight Claude Agent SDK sub-agents light up in par
 **Frame 1 — Hero**
 ```
 ┌─────────────────────────────────────────┐
-│   AI MATURITY AUDIT                     │
+│   AI READINESS AUDIT                     │
 │   Drop your URL. 8 sub-agents run.      │
 │   [ https://anthropic.com          ]    │
 │   [ Launch Agent Swarm           → ]    │
@@ -67,7 +67,7 @@ Narration: "The critic challenges weak scores. Uncertainty becomes a sales-call 
 
 **Frame 5 — Scorecard + heatmap**
 ```
-Overall Maturity: 3.4 / 4.0 · Level 3 Operational
+Overall Readiness: 3.4 / 4.0 · Level 3 Operational
 
 D1 Strategy       [  ] [  ] [  ] [L4]  4.0
 D2 Data           [  ] [  ] [L3] [  ]  3.2
@@ -99,8 +99,8 @@ It's not. The LLM only picks a level and cites evidence. The arithmetic — per-
 **"Is this real AI or random?"**
 Watch the terminal. Every specialist emits evidence citations from the scraped dossier — direct quotes with source URLs. We demo against Anthropic because it's a live test case with real public data: careers pages, research posts, safety policies. The critic challenges scores where evidence is thin and forces a `discovery_needed` flag. Every number on screen is traceable back to a scraped sentence.
 
-**"Competitors like Deloitte AI Maturity exist."**
-Three differences. (a) Deloitte charges $50k and takes six weeks of consultant time. We charge $1,000 and run in sixty seconds — the economics open up the SMB market Deloitte can't touch. (b) Deloitte's rubric is black-box consultant judgment. Ours cites public evidence on screen. (c) Porter's Value Chain overlay on top of AI maturity scores is novel — nobody else maps where in the value chain AI creates leverage, activity by activity. The $1k audit becomes the top of funnel for $50k–$500k implementation consulting.
+**"Competitors like Deloitte AI Readiness exist."**
+Three differences. (a) Deloitte charges $50k and takes six weeks of consultant time. We charge $1,000 and run in sixty seconds — the economics open up the SMB market Deloitte can't touch. (b) Deloitte's rubric is black-box consultant judgment. Ours cites public evidence on screen. (c) Porter's Value Chain overlay on top of AI readiness scores is novel — nobody else maps where in the value chain AI creates leverage, activity by activity. The $1k audit becomes the top of funnel for $50k–$500k implementation consulting.
 
 **"What about accuracy?"**
 The predict-then-validate hybrid is the point. Agents prefill the questionnaire from public evidence. A human reviewer confirms or overrides in 60 seconds. Where evidence is thin, the critic sets `discovery_needed` — that question becomes a talking point on the expert call, not a blind guess in the report. We turn uncertainty into revenue, not error.

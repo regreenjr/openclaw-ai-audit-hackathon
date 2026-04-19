@@ -48,7 +48,7 @@ Everything listed here is a landmine that could eat >1 hour if not sidestepped.
 
 **Trap:** "Impressive = long" wrong for a demo. 20-page PDFs break layout and eat time.
 
-**Sidestep:** 6-page PDF, fixed sections: Cover → Exec Summary → Maturity Heatmap → Top 5 Gaps → 90-day Roadmap → Next Steps / Book Expert CTA.
+**Sidestep:** 6-page PDF, fixed sections: Cover → Exec Summary → Readiness Heatmap → Top 5 Gaps → 90-day Roadmap → Next Steps / Book Expert CTA.
 
 ## 9. "Any SMB" breadth killing question specificity
 

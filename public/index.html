@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gapstone — AI Maturity Audit</title>
+    <title>Gapstone — AI Readiness Audit</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0a0a0a; color: #ededed; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
@@ -109,7 +109,7 @@
         </div>
         <h1 class="text-5xl md:text-7xl font-bold tracking-tight gradient-text">Gapstone</h1>
         <p class="text-xl text-gray-400 max-w-2xl mx-auto">
-            Drop your URL. A swarm of Claude sub-agents scrapes your public footprint and predicts your AI maturity. Then take a 2-minute self-assessment and we'll fuse both signals into a 90-day roadmap.
+            Drop your URL. A swarm of Claude sub-agents scrapes your public footprint and predicts your AI readiness. Then take a 2-minute self-assessment and we'll fuse both signals into a 90-day roadmap.
         </p>
 
         <form id="auditForm" class="mt-8 space-y-4 max-w-xl mx-auto text-left">
@@ -183,15 +183,15 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- OVERALL SCORE -->
             <div class="glass-panel p-8 rounded-2xl flex flex-col items-center justify-center text-center">
-                <div class="text-xs text-gray-400 uppercase tracking-widest mb-2">Overall Maturity</div>
+                <div class="text-xs text-gray-400 uppercase tracking-widest mb-2">Overall Readiness</div>
                 <div id="overallScore" class="text-7xl font-bold gradient-text">0.0</div>
                 <div class="text-gray-500 mt-2">out of 4.0</div>
-                <div id="maturityLabel" class="mt-3 text-sm text-gray-400"></div>
+                <div id="readinessLabel" class="mt-3 text-sm text-gray-400"></div>
             </div>
 
             <!-- HEATMAP -->
             <div class="glass-panel p-6 rounded-2xl md:col-span-2">
-                <h3 class="text-lg font-semibold mb-4 border-b border-gray-800 pb-3">Maturity Heatmap (5 × 4)</h3>
+                <h3 class="text-lg font-semibold mb-4 border-b border-gray-800 pb-3">Readiness Heatmap (5 × 4)</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-xs" id="heatmapTable">
                         <thead>
@@ -272,7 +272,7 @@
                     <div class="text-xs uppercase tracking-widest text-emerald-300 mb-2">Next step · 2 minutes</div>
                     <h3 class="text-2xl font-bold text-white mb-2">Confirm or correct the agents' 20 predictions</h3>
                     <p class="text-gray-400 text-sm leading-relaxed">
-                        The agents just predicted your maturity from public signals alone. Review them below —
+                        The agents just predicted your readiness from public signals alone. Review them below —
                         especially anywhere we flagged <span class="text-amber-300">discovery needed</span> — and we'll fuse your answers with the scraped evidence into a definitive combined report.
                     </p>
                 </div>
@@ -286,9 +286,9 @@
         <!-- CTA (Book + PDF) -->
         <div class="mt-12 text-center glass-panel p-12 rounded-2xl bg-gradient-to-b from-white/5 to-transparent border-t border-white/20">
             <h2 class="text-3xl font-bold text-white mb-3">Close the Gap.</h2>
-            <p class="text-gray-400 mb-8 max-w-xl mx-auto">Book a 30-minute call with an AI integration expert to turn these gaps into a funded, prioritized roadmap.</p>
+            <p class="text-gray-400 mb-8 max-w-xl mx-auto">Book a 50-minute call with an AI integration expert to turn these gaps into a funded, prioritized roadmap.</p>
             <div class="cta-buttons flex flex-col sm:flex-row gap-4 items-center justify-center">
-                <a href="#" class="inline-block bg-white text-black font-bold text-xl px-10 py-5 rounded-xl hover:scale-105 transition-transform shadow-[0_0_40px_rgba(255,255,255,0.3)]">
+                <a href="https://calendly.com/robbgreen/50-minute-meeting" target="_blank" rel="noopener" class="inline-block bg-white text-black font-bold text-xl px-10 py-5 rounded-xl hover:scale-105 transition-transform shadow-[0_0_40px_rgba(255,255,255,0.3)]">
                     Book $1k Strategy Call
                 </a>
                 <button type="button" id="downloadPdfBtn" class="inline-flex items-center gap-2 bg-transparent border border-white/30 text-white font-medium text-base px-6 py-4 rounded-xl hover:bg-white/10 hover:border-white/50 transition-colors">
@@ -303,17 +303,21 @@
     <div id="quizView" class="hidden w-full max-w-4xl mt-12 space-y-6">
         <div class="text-center space-y-3 mb-4">
             <div class="inline-block px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-xs font-medium tracking-wide text-emerald-300 uppercase">
-                Step 2 of 2 · Self-Assessment
+                Step 1 of 2 · Self-Assessment
             </div>
-            <h2 class="text-4xl font-bold">Confirm the agents' answers</h2>
+            <h2 class="text-4xl font-bold">AI readiness self-assessment</h2>
             <p class="text-gray-400 max-w-2xl mx-auto text-sm leading-relaxed">
-                Our agents pre-filled predictions from your public footprint. Green checks = strong evidence. Amber = suggested. Empty = discovery needed. Override anything we got wrong.
+                Answer all 20 questions honestly. Our agents are scraping your digital footprint in parallel — we'll fuse both signals into a combined report when you submit.
             </p>
             <div class="flex items-center justify-center gap-4 pt-2">
                 <span id="quizProgressText" class="text-sm text-gray-400">0 / 20 answered</span>
                 <div class="w-56 h-1.5 bg-gray-800 rounded-full overflow-hidden">
                     <div id="quizProgressBar" class="h-1.5 bg-emerald-400 rounded-full transition-all duration-300" style="width: 0%"></div>
                 </div>
+            </div>
+            <div class="inline-flex items-center gap-2 text-xs text-gray-400 pt-1">
+                <span id="quizAgentStatusDot" class="inline-block w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+                <span id="quizAgentStatus">Agents scraping your public footprint…</span>
             </div>
         </div>
 
@@ -482,7 +486,7 @@
     const phaseLabel = document.getElementById('phaseLabel');
     const liveCost = document.getElementById('liveCost');
 
-    const MATURITY_LABELS = {
+    const READINESS_LABELS = {
         1: "Level 1 · Ad-hoc",
         2: "Level 2 · Experimental",
         3: "Level 3 · Operational",
@@ -528,9 +532,14 @@
     let totalCost = 0;
     // Session state for the self-assessment flow
     let currentSessionId = null;
-    let scrapedAnswers = {};      // { Q4: { level, confidence, discovery_needed, stem, ... }, ... }
-    let currentScreener = {};     // industry, priority_function, etc — remembered for quiz pre-fill
+    let scrapedAnswers = {};      // { Q4: { level, confidence, discovery_needed, stem, ... }, ... } — captured for future delta UX, no longer used for pre-fill
+    let currentScreener = {};     // industry, priority_function, etc — remembered for quiz header context
     let questionsData = null;     // loaded lazily from /questions.json when user enters quiz
+    let pipelineComplete = false;
+    let agentsDone = new Set();
+    const TOTAL_AGENTS = 11;
+    let sessionIdResolver = null; // resolves once pipeline.start arrives with session_id
+    let sessionIdPromise = null;
 
     function handleEvent(ev) {
         const { type, agent, data } = ev;
@@ -540,6 +549,7 @@
             if (data.session_id) {
                 currentSessionId = data.session_id;
                 console.log('[gapstone] session_id:', currentSessionId);
+                if (sessionIdResolver) { sessionIdResolver(data.session_id); sessionIdResolver = null; }
             }
             termLine(`> orchestrator: starting audit for ${data.company_name} (${data.url})`, 'text-emerald-400');
         }
@@ -563,6 +573,7 @@
                 totalCost += data.cost_usd;
                 liveCost.textContent = `cost: $${totalCost.toFixed(3)}`;
             }
+            if (agent) { agentsDone.add(agent); updateAgentStatusBanner(); }
             termLine(`  ${agent}: done ($${(data.cost_usd || 0).toFixed(3)})`, 'text-emerald-400');
         }
         else if (type === 'agent.error') {
@@ -592,10 +603,12 @@
             }
         }
         else if (type === 'pipeline.complete') {
-            termLine(`> complete — overall maturity ${data.overall_score}/4.0`, 'text-emerald-400');
+            termLine(`> complete — overall readiness ${data.overall_score}/4.0`, 'text-emerald-400');
             if (data.session_id) currentSessionId = data.session_id;
-            results.classList.remove('hidden');
-            results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            pipelineComplete = true;
+            updateAgentStatusBanner();
+            updateQuizProgress();
+            // Results panel stays hidden — user is in the quiz; combined report will unveil the final report.
         }
         else if (type === 'pipeline.error') {
             termLine(`! pipeline failed: ${data.error}`, 'text-rose-400');
@@ -606,7 +619,7 @@
 
     function renderScorecard(s) {
         document.getElementById('overallScore').textContent = s.overall_score.toFixed(1);
-        document.getElementById('maturityLabel').textContent = MATURITY_LABELS[Math.round(s.overall_score)] || '';
+        document.getElementById('readinessLabel').textContent = READINESS_LABELS[Math.round(s.overall_score)] || '';
 
         const DIM_NAMES = {
             D1: "Strategy & Leadership", D2: "Data & Infrastructure",
@@ -798,21 +811,30 @@
         totalCost = 0;
         liveCost.textContent = '';
 
-        // Remember screener for quiz pre-fill
+        // Reset quiz-gating state for a fresh run
         currentScreener = { industry, size, role: 'COO / Operations lead', priority_function: priorityFunction };
-        scrapedAnswers = {};  // fresh run, clear any prior answers
+        scrapedAnswers = {};
+        pipelineComplete = false;
+        agentsDone = new Set();
+        sessionIdPromise = new Promise(resolve => { sessionIdResolver = resolve; });
 
-        try {
-            await streamAudit({
-                companyUrl: url,
-                companyName: deriveCompanyName(url),
-                industry, size, role: 'COO / Operations lead',
-                priority_function: priorityFunction,
-            });
-        } catch (err) {
+        // Fire-and-forget the audit stream; we'll jump to the quiz as soon as we have a session_id.
+        streamAudit({
+            companyUrl: url,
+            companyName: deriveCompanyName(url),
+            industry, size, role: 'COO / Operations lead',
+            priority_function: priorityFunction,
+        }).catch(err => {
             termLine(`! fatal: ${err.message}`, 'text-rose-400');
             submitBtn.disabled = false;
             submitBtn.innerHTML = 'Try Again';
+        });
+
+        try {
+            await sessionIdPromise;
+            await showQuizView();
+        } catch (err) {
+            termLine(`! quiz-open failed: ${err.message}`, 'text-rose-400');
         }
     });
 
@@ -834,34 +856,16 @@
         return questionsData;
     }
 
-    async function hydrateScrapedAnswersFromServer() {
-        // Fallback when specialist.result events didn't fully populate (e.g. page reload)
-        if (!currentSessionId || !API_URL) return;
-        try {
-            const r = await fetch(`${API_URL}/api/session/${currentSessionId}`);
-            if (!r.ok) return;
-            const sess = await r.json();
-            const serverAnswers = sess && sess.scraped_answers;
-            if (serverAnswers && typeof serverAnswers === 'object') {
-                for (const qid of Object.keys(serverAnswers)) {
-                    if (!scrapedAnswers[qid]) scrapedAnswers[qid] = serverAnswers[qid];
-                }
-            }
-        } catch (e) {
-            console.warn('[gapstone] hydrate failed', e);
-        }
-    }
-
     async function showQuizView() {
         if (!currentSessionId) {
             alert('No session found. Re-run the audit to continue.');
             return;
         }
         await loadQuestions();
-        await hydrateScrapedAnswersFromServer();
 
-        // Hide results, show quiz
+        // Hide the audit progress UI + results; show quiz
         document.getElementById('results').classList.add('hidden');
+        if (timelineWrap) timelineWrap.classList.add('hidden');
         const quizView = document.getElementById('quizView');
         quizView.classList.remove('hidden');
         quizView.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -873,6 +877,7 @@
         }
 
         renderQuiz();
+        updateAgentStatusBanner();
     }
 
     function renderQuiz() {
@@ -904,20 +909,6 @@
     }
 
     function renderQuestion(q) {
-        const scraped = scrapedAnswers[q.id] || {};
-        const predictedLevel = scraped.level;
-        const confidence = scraped.confidence || 0;
-        const discoveryNeeded = !!scraped.discovery_needed;
-
-        let badge = '';
-        if (discoveryNeeded) {
-            badge = '<span class="text-[10px] px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded border border-amber-500/30">⚠ discovery needed — please answer</span>';
-        } else if (confidence >= 0.8 && predictedLevel) {
-            badge = `<span class="text-[10px] px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30">✓ pre-filled · ${Math.round(confidence * 100)}% confidence</span>`;
-        } else if (confidence >= 0.5 && predictedLevel) {
-            badge = `<span class="text-[10px] px-2 py-0.5 bg-sky-500/20 text-sky-300 rounded border border-sky-500/30">suggested · ${Math.round(confidence * 100)}% confidence</span>`;
-        }
-
         const mainOptions = q.options.filter(o => !o.flag);
         const wrap = document.createElement('div');
         wrap.innerHTML = `
@@ -929,29 +920,19 @@
                             const key = m.slice(2,-2);
                             return currentScreener[key] || m;
                         })}</p>
-                        ${badge}
                     </div>
                     <div class="space-y-1 quiz-options" data-qid="${q.id}">
-                        ${mainOptions.map(opt => {
-                            const checked = (!discoveryNeeded && predictedLevel === opt.level) ? 'checked' : '';
-                            return `
-                                <label class="flex items-start gap-3 p-2 rounded hover:bg-white/5 cursor-pointer transition-colors">
-                                    <input type="radio" name="${q.id}" value="${opt.level}" ${checked} class="mt-1 accent-emerald-400" />
-                                    <span class="text-sm flex-1"><span class="text-gray-500 font-mono mr-2">L${opt.level}</span><span class="text-gray-300">${opt.text}</span></span>
-                                </label>
-                            `;
-                        }).join('')}
+                        ${mainOptions.map(opt => `
+                            <label class="flex items-start gap-3 p-2 rounded hover:bg-white/5 cursor-pointer transition-colors">
+                                <input type="radio" name="${q.id}" value="${opt.level}" class="mt-1 accent-emerald-400" />
+                                <span class="text-sm flex-1"><span class="text-gray-500 font-mono mr-2">L${opt.level}</span><span class="text-gray-300">${opt.text}</span></span>
+                            </label>
+                        `).join('')}
                         <label class="flex items-start gap-3 p-2 rounded hover:bg-white/5 cursor-pointer transition-colors">
                             <input type="radio" name="${q.id}" value="0" class="mt-1 accent-amber-400" />
                             <span class="text-sm text-gray-400 italic flex-1">Don't know / Not sure</span>
                         </label>
                     </div>
-                    ${scraped.evidence && scraped.evidence.length ? `
-                        <details class="mt-2">
-                            <summary class="cursor-pointer text-xs text-gray-500 hover:text-gray-300">${scraped.evidence.length} piece${scraped.evidence.length>1?'s':''} of evidence from agents</summary>
-                            <ul class="mt-2 space-y-1 text-xs text-gray-400 pl-4 border-l border-gray-800">${scraped.evidence.map(e => `<li>· ${e}</li>`).join('')}</ul>
-                        </details>
-                    ` : ''}
                 </div>
             </div>
         `;
@@ -964,16 +945,35 @@
     function updateQuizProgress() {
         const total = (questionsData && questionsData.scored ? questionsData.scored.length : 20);
         const answered = document.querySelectorAll('#quizQuestions input[type=radio]:checked').length;
-        document.getElementById('quizProgressText').textContent = `${answered} / ${total} answered`;
-        document.getElementById('quizProgressBar').style.width = `${(answered / total) * 100}%`;
+        const progressEl = document.getElementById('quizProgressText');
+        const barEl = document.getElementById('quizProgressBar');
         const btn = document.getElementById('quizSubmitBtn');
         const hint = document.getElementById('quizSubmitHint');
-        if (answered >= total) {
-            btn.disabled = false;
-            hint.textContent = 'All questions answered. Generate your combined report.';
-        } else {
+        if (progressEl) progressEl.textContent = `${answered} / ${total} answered`;
+        if (barEl) barEl.style.width = `${(answered / total) * 100}%`;
+        if (!btn || !hint) return;
+        if (answered < total) {
             btn.disabled = true;
             hint.textContent = `Answer all ${total} questions to enable submit. ${total - answered} remaining.`;
+        } else if (!pipelineComplete) {
+            btn.disabled = true;
+            hint.textContent = `All answered! Waiting for agents to finish scraping (${agentsDone.size}/${TOTAL_AGENTS})…`;
+        } else {
+            btn.disabled = false;
+            hint.textContent = 'All answered. Generate your combined report.';
+        }
+    }
+
+    function updateAgentStatusBanner() {
+        const label = document.getElementById('quizAgentStatus');
+        const dot = document.getElementById('quizAgentStatusDot');
+        if (!label) return;
+        if (pipelineComplete) {
+            label.textContent = `Agents done (${agentsDone.size}/${TOTAL_AGENTS}). Submit whenever you're ready.`;
+            if (dot) { dot.classList.remove('bg-yellow-400', 'animate-pulse'); dot.classList.add('bg-emerald-400'); }
+        } else {
+            label.textContent = `Agents scraping your public footprint… ${agentsDone.size}/${TOTAL_AGENTS} done`;
+            if (dot) { dot.classList.add('bg-yellow-400', 'animate-pulse'); dot.classList.remove('bg-emerald-400'); }
         }
     }
 
@@ -1080,7 +1080,7 @@
         } else if (type === 'regulatory_scan') {
             renderRegulatoryScan(data);
         } else if (type === 'combined.complete') {
-            combiningLine(`> complete — combined maturity ${data.overall_score}/4.0`, 'text-emerald-400');
+            combiningLine(`> complete — combined readiness ${data.overall_score}/4.0`, 'text-emerald-400');
             // Hide the combining panel, scroll to results
             const quizView = document.getElementById('quizView');
             if (quizView) quizView.classList.add('hidden');
@@ -1098,16 +1098,14 @@
         section.classList.remove('hidden');
         list.innerHTML = shortlists.map(sl => {
             const vendors = (sl.vendors || []).map(v => `
-                <div class="p-4 bg-white/5 rounded-lg border border-white/10 space-y-2">
-                    <div class="flex items-start justify-between gap-3">
-                        <div>
-                            <a href="${v.website}" target="_blank" rel="noopener" class="font-semibold text-white hover:underline">${v.name}</a>
-                            <p class="text-xs text-gray-500 mt-0.5">${v.positioning || ''}</p>
-                        </div>
-                        <div class="text-right shrink-0">
-                            <div class="text-xs text-emerald-300 font-mono">${v.price_band || '—'}</div>
-                            <div class="text-[10px] text-gray-500 mt-0.5">${v.setup_complexity || ''}</div>
-                        </div>
+                <div class="p-4 bg-white/5 rounded-lg border border-white/10 space-y-2 min-w-0">
+                    <div class="space-y-0.5 min-w-0">
+                        <a href="${v.website}" target="_blank" rel="noopener" class="font-semibold text-white hover:underline break-words">${v.name}</a>
+                        <p class="text-xs text-gray-500">${v.positioning || ''}</p>
+                    </div>
+                    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-xs">
+                        <span class="text-emerald-300 font-mono break-words">${v.price_band || '—'}</span>
+                        ${v.setup_complexity ? `<span class="text-gray-500">· ${v.setup_complexity}</span>` : ''}
                     </div>
                     <p class="text-sm text-gray-300">${v.why_fit || ''}</p>
                     ${v.watchouts ? `<p class="text-xs text-amber-300/80">⚠ ${v.watchouts}</p>` : ''}

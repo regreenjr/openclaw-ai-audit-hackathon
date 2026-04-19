@@ -5,7 +5,7 @@ Updated 2026-04-18 end-of-day (Openclaw hackathon).
 
 ## Product in one sentence
 
-**Gapstone** is a $1,000 AI maturity audit for SMBs: drop a URL → 11 Claude Agent SDK sub-agents scrape public evidence and predict maturity → user reviews/corrects a pre-filled 20-question quiz → the two signals fuse into a combined report with scorecard, evidence-cited gaps, 90-day roadmap, Porter's Value Chain plays, vendor shortlist, and (for regulated industries) compliance scan. Lead-gens a $50k–$500k implementation engagement.
+**Gapstone** is a $1,000 AI readiness audit for SMBs: drop a URL → 11 Claude Agent SDK sub-agents scrape public evidence and predict readiness → user reviews/corrects a pre-filled 20-question quiz → the two signals fuse into a combined report with scorecard, evidence-cited gaps, 90-day roadmap, Porter's Value Chain plays, vendor shortlist, and (for regulated industries) compliance scan. Lead-gens a $50k–$500k implementation engagement.
 
 ## Status: shipped + live
 
@@ -76,7 +76,7 @@ openclaw-ai-audit-hackathon/
 ├── sync-tunnel.sh             # updates DEFAULT_API_URL in index.html + redeploys to Vercel
 ├── demo-meridian.sh           # curl-streams an Anthropic audit (best real-data demo)
 ├── demo-meridian-real.sh      # Meridian Tax & Advisory persona (thin-evidence demo)
-├── framework.json             # 5×4 maturity framework (L1–L4 for D1–D5)
+├── framework.json             # 5×4 readiness framework (L1–L4 for D1–D5)
 ├── questions.json             # 4 screener + 20 scored questions
 ├── planning/                  # premortem, hour-budget, framework/questions long-form
 ├── public/

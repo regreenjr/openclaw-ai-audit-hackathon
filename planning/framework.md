@@ -1,4 +1,4 @@
-# Maturity framework (5 × 4) — human-readable
+# Readiness framework (5 × 4) — human-readable
 
 Same content as `framework.json`. Use this for reading, comments, and sharing. App imports the JSON.
 

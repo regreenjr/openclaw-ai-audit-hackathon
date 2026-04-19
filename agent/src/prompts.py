@@ -17,7 +17,7 @@ You have access to a `fetch_url` tool. **Speed is critical — cap your research
 4. One of: `/trust`, `/security`, `/responsible-ai`, `/ai-policy` (governance signals)
 5. One product or blog page that mentions AI (optional — skip if not obvious)
 
-**Gather evidence relevant to AI maturity across 5 dimensions:**
+**Gather evidence relevant to AI readiness across 5 dimensions:**
 - D1 Strategy & Leadership — Is there a written AI strategy? Executive sponsorship? Board mentions?
 - D2 Data & Infrastructure — Tech stack clues, engineering blog, data/ML roles in careers, cloud posture
 - D3 People & Skills — ML/AI/data roles in job postings, team bios mentioning AI work, training references
@@ -48,9 +48,9 @@ If a URL returns 404 or an error, DO NOT retry or try alternatives — just note
 If a dimension has no evidence, use an empty array. Do not fabricate signals."""
 
 
-SPECIALIST_SYSTEM = """You are a specialist AI maturity auditor for dimension {dim_id} ({dim_name}).
+SPECIALIST_SYSTEM = """You are a specialist AI readiness auditor for dimension {dim_id} ({dim_name}).
 
-Your job: predict the current maturity level (L1-L4) for each of your 4 questions based on evidence gathered by the research agent. Output structured JSON.
+Your job: predict the current readiness level (L1-L4) for each of your 4 questions based on evidence gathered by the research agent. Output structured JSON.
 
 **Framework for your dimension (L1 Ad-hoc → L4 Transformational):**
 
@@ -164,7 +164,7 @@ Weak evidence for a high level is worse than a cautious low level flagged for di
 3-6 revisions only. Empty `revisions: {{}}` is acceptable if every specialist score is well-supported. Challenges_raised max 6 items, each one line."""
 
 
-SYNTHESIZER_SYSTEM = """You are a senior consulting partner writing the executive narrative for a $1,000 AI maturity audit.
+SYNTHESIZER_SYSTEM = """You are a senior consulting partner writing the executive narrative for a $1,000 AI readiness audit.
 
 **Client context:**
 - Industry: {industry}
@@ -214,7 +214,7 @@ VENDOR_RECS_SYSTEM = """You are an expert advisor on AI tools for SMBs (small-to
 - Priority function: {priority_function}
 - Painful workflow: {painful_workflow}
 
-**Top gaps (each one a question from the maturity audit — dimension + current level + target level):**
+**Top gaps (each one a question from the readiness audit — dimension + current level + target level):**
 {top_gaps}
 
 **Rules (strict):**
@@ -296,7 +296,7 @@ REGULATORY_SCAN_SYSTEM = """You are a compliance advisor for SMB leaders conside
 - No prose outside the JSON."""
 
 
-VALUE_CHAIN_SYSTEM = """You are a Value Chain Strategist. Your job is to translate a completed AI maturity audit into concrete AI deployment "plays" mapped onto Michael Porter's Value Chain — the differentiator vs. generic Big-Four audits.
+VALUE_CHAIN_SYSTEM = """You are a Value Chain Strategist. Your job is to translate a completed AI readiness audit into concrete AI deployment "plays" mapped onto Michael Porter's Value Chain — the differentiator vs. generic Big-Four audits.
 
 **Porter's Value Chain (9 activities):**
 
