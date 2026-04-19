@@ -176,8 +176,8 @@
     <!-- RESULTS -->
     <div id="results" class="hidden w-full max-w-5xl mt-12 space-y-8">
         <div class="text-center mb-8 fade-in">
-            <h2 class="text-4xl font-bold">Audit Complete</h2>
-            <p class="text-gray-400 mt-2" id="resultsSubtitle">Multi-agent scorecard + Porter's Value Chain deployment plan + 90-day roadmap.</p>
+            <h2 class="text-4xl font-bold">Preliminary Agent Scorecard</h2>
+            <p class="text-gray-400 mt-2" id="resultsSubtitle">Agents' best guess from your public footprint alone. Submit the self-assessment above to fuse this with your answers into the combined report.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -608,7 +608,11 @@
             pipelineComplete = true;
             updateAgentStatusBanner();
             updateQuizProgress();
-            // Results panel stays hidden — user is in the quiz; combined report will unveil the final report.
+            // Reveal the preliminary scorecard + swarm output below the quiz.
+            // Hide the legacy "Continue to Self-Assessment" CTA — quiz is already open.
+            const ctaPanel = document.getElementById('continueToQuizPanel');
+            if (ctaPanel) ctaPanel.classList.add('hidden');
+            results.classList.remove('hidden');
         }
         else if (type === 'pipeline.error') {
             termLine(`! pipeline failed: ${data.error}`, 'text-rose-400');
@@ -863,10 +867,15 @@
         }
         await loadQuestions();
 
-        // Hide the audit progress UI + results; show quiz
-        document.getElementById('results').classList.add('hidden');
-        if (timelineWrap) timelineWrap.classList.add('hidden');
+        // Reveal the quiz — keep the agent timeline visible above so the swarm is still on screen.
+        // Move the quiz above the results panel in DOM so that when pipeline.complete reveals
+        // the preliminary scorecard, it lands *below* the quiz rather than shoving it down.
         const quizView = document.getElementById('quizView');
+        const resultsPanel = document.getElementById('results');
+        if (quizView && resultsPanel && resultsPanel.parentNode === quizView.parentNode) {
+            const quizAfterResults = !!(resultsPanel.compareDocumentPosition(quizView) & Node.DOCUMENT_POSITION_FOLLOWING);
+            if (quizAfterResults) resultsPanel.parentNode.insertBefore(quizView, resultsPanel);
+        }
         quizView.classList.remove('hidden');
         quizView.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
