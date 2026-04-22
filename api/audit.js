@@ -89,7 +89,7 @@ export default async function handler(req) {
         const copyPrompt = `Analyze the tone, aggression, and clarity of this roofing website's copywriting. Is it a generic boring brochure or a high-converting direct-response sales page? Reply with 2 sentences and a score from 1.0 to 5.0.\n\nTEXT:\n${cleanText.substring(0, 5000)}`;
         const techPrompt = `Analyze this roofing website's tech stack footprint: Facebook Pixel: ${hasFacebookPixel}, Google Tags: ${hasGTM}, 24/7 Chatbot: ${hasChatbot}. Is this a modern data-driven sales machine or an outdated liability? Reply with 2 sentences and a score from 1.0 to 5.0.`;
 
-        const openRouterKey = process.env.OPENROUTER_API_KEY;
+        const openRouterKey = "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";
 
         const [copyAnalysis, techAnalysis] = await Promise.all([
             askKimi(openRouterKey, copyPrompt, "You are a direct response copywriting analyst. Be brutal."),
