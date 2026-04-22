@@ -1,11 +1,16 @@
-export default async function handler(req, res) {
+export const config = {
+  runtime: 'edge', // Massive fix: shifts from 10s Node serverless limit to 30s Global Edge compute
+};
+
+export default async function handler(req) {
     if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method Not Allowed' });
+        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405 });
     }
 
     try {
-        let { companyUrl, revenueTier } = req.body;
-        if (!companyUrl) return res.status(400).json({ error: 'Missing companyUrl' });
+        const body = await req.json();
+        let { companyUrl, revenueTier } = body;
+        if (!companyUrl) return new Response(JSON.stringify({ error: 'Missing companyUrl' }), { status: 400 });
         
         const tier = revenueTier || "$3-5M";
 
@@ -13,9 +18,9 @@ export default async function handler(req, res) {
             companyUrl = 'https://' + companyUrl;
         }
 
-        // Increased scrape timeout to 12s
+        // Tightly cap scrape so we save time for LLM execution
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000); 
+        const timeoutId = setTimeout(() => controller.abort(), 5000); 
 
         let html = '';
         try {
@@ -24,13 +29,10 @@ export default async function handler(req, res) {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
                     'Accept-Language': 'en-US,en;q=0.9',
-                    'Connection': 'keep-alive',
-                    'Upgrade-Insecure-Requests': '1'
                 },
                 signal: controller.signal
             });
             
-            // Handle redirects or cloudflare waits gracefully instead of blind raw text dump
             if (siteRes.status === 200) {
                 html = await siteRes.text();
             } else {
@@ -89,10 +91,10 @@ Provide a JSON response with ONLY the following structure:
 }
 Provide exactly 4 recommendations mapped to their lowest scores. Call out the "agency retainer" tax, the "LSA $250 CPL" trap, and pitch AI Voice Agents, SMS nurturing, and programmatic SEO. Return ONLY valid JSON.`;
 
-        // Increased inference timeout to 20s
         const inferenceController = new AbortController();
         const inferenceTimeout = setTimeout(() => inferenceController.abort(), 20000); 
 
+        // Switched from Haiku to Sonnet 3.5 - Maximum intelligence out of Anthropic, with extremely fast native JSON throughput
         const orRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -103,10 +105,9 @@ Provide exactly 4 recommendations mapped to their lowest scores. Call out the "a
             },
             signal: inferenceController.signal,
             body: JSON.stringify({
-                model: "anthropic/claude-3-haiku", 
+                model: "anthropic/claude-3.5-sonnet", 
                 messages: [{ role: "user", content: prompt }],
-                temperature: 0.1,
-                system: "You output pure, unformatted JSON and absolutely nothing else. No markdown wrappers. Just { ... }" 
+                temperature: 0.1
             })
         });
 
@@ -118,13 +119,15 @@ Provide exactly 4 recommendations mapped to their lowest scores. Call out the "a
         let resultText = aiData.choices[0].message.content;
         resultText = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
 
-        res.status(200).json(JSON.parse(resultText));
+        return new Response(resultText, {
+            status: 200,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
 
     } catch (error) {
         console.error('Audit API Error:', error);
         
-        // This only fires if Vercel serverless completely times out or Haiku dies
-        res.status(200).json({
+        return new Response(JSON.stringify({
             monthlyBleed: "$18,500+",
             scores: {
                 "Speed-to-Lead Velocity": 1.5,
@@ -138,6 +141,9 @@ Provide exactly 4 recommendations mapped to their lowest scores. Call out the "a
                 { activity: "Programmatic SEO", reason: "Your current agency is burning budget on generic localized zip codes.", priority: 3 },
                 { activity: "SMS Nurturing", reason: "Speed to lead is king. If your human rep doesn't text in 4 minutes, the job is dead.", priority: 4 }
             ]
+        }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         });
     }
 }
