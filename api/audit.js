@@ -1,6 +1,41 @@
 export const config = {
-  runtime: 'edge', // Massive fix: shifts from 10s Node serverless limit to 30s Global Edge compute
+  runtime: 'edge', // Fast global edge execution
 };
+
+async function askKimi(apiKey, prompt, systemInstruction = "You are a ruthless marketing auditor.") {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000); 
+
+    try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://robbgreen.com",
+                "X-Title": "K2.6 Swarm Edge"
+            },
+            signal: controller.signal,
+            body: JSON.stringify({
+                model: "moonshotai/kimi-k2.6", 
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.1,
+                system: systemInstruction
+            })
+        });
+
+        clearTimeout(timeout);
+        const data = await response.json();
+        
+        if (data.error) throw new Error(data.error.message);
+        
+        return data.choices[0].message.content;
+    } catch (e) {
+        clearTimeout(timeout);
+        console.error("Kimi Agent failed:", e.message);
+        return "ERROR: " + e.message;
+    }
+}
 
 export default async function handler(req) {
     if (req.method !== 'POST') {
@@ -13,36 +48,31 @@ export default async function handler(req) {
         if (!companyUrl) return new Response(JSON.stringify({ error: 'Missing companyUrl' }), { status: 400 });
         
         const tier = revenueTier || "$3-5M";
+        if (!/^https?:\/\//i.test(companyUrl)) companyUrl = 'https://' + companyUrl;
 
-        if (!/^https?:\/\//i.test(companyUrl)) {
-            companyUrl = 'https://' + companyUrl;
-        }
-
-        // Tightly cap scrape so we save time for LLM execution
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); 
+        // 1. The Scraper Agent
+        const scraperController = new AbortController();
+        const scraperTimeout = setTimeout(() => scraperController.abort(), 6000); 
 
         let html = '';
         try {
             const siteRes = await fetch(companyUrl, { 
                 headers: { 
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
                     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
                     'Accept-Language': 'en-US,en;q=0.9',
                 },
-                signal: controller.signal
+                signal: scraperController.signal
             });
             
             if (siteRes.status === 200) {
                 html = await siteRes.text();
             } else {
-                console.warn(`Scrape returned ${siteRes.status} for ${companyUrl}`);
                 html = `HTTP ${siteRes.status} response.`;
             }
-            clearTimeout(timeoutId);
+            clearTimeout(scraperTimeout);
         } catch(fe) {
-            console.error("Scrape failed: ", fe.message);
-            html = 'Homepage failed to load via automated scraper. Score purely on theoretical financial parameters.';
+            html = 'Homepage failed to load.';
         }
 
         const hasFacebookPixel = html.includes('fbevents.js') || html.includes('fbq(');
@@ -55,95 +85,61 @@ export default async function handler(req) {
                               .replace(/\s+/g, ' ')
                               .substring(0, 10000); 
 
-        const prompt = `You are a ruthless 8-figure roofing marketing auditor. 
-Analyze this website's text and technical metadata to grade their sales/marketing infrastructure.
-The company is doing ${tier} in annual revenue.
+        // 2. Parallel K2.6 Swarm (Executed concurrently)
+        const copyPrompt = `Analyze the tone, aggression, and clarity of this roofing website's copywriting. Is it a generic boring brochure or a high-converting direct-response sales page? Reply with 2 sentences and a score from 1.0 to 5.0.\n\nTEXT:\n${cleanText.substring(0, 5000)}`;
+        const techPrompt = `Analyze this roofing website's tech stack footprint: Facebook Pixel: ${hasFacebookPixel}, Google Tags: ${hasGTM}, 24/7 Chatbot: ${hasChatbot}. Is this a modern data-driven sales machine or an outdated liability? Reply with 2 sentences and a score from 1.0 to 5.0.`;
 
-INDUSTRY BENCHMARKS & LOGIC TO APPLY:
-- At ${tier} revenue, they spend 8-10% on marketing.
-- LSA (Google Local Services Ads) storm leads cost $200-$250+.
-- Marketing agencies charge $2k-$5k/mo on retainer.
-- If they do not have a chatbot/booking widget (24/7 capture), they are losing at least 4 LSA leads per week ($1,000 in sunk ad cost + lost job value).
-- If they do not have programmatic local SEO (specific city pages), 65% of their Google Search budget is hitting wrong zip codes.
+        const openRouterKey = process.env.OPENROUTER_API_KEY;
 
-Website URL: ${companyUrl}
-Tech Stack Discovered via live DOM scrape: 
-- Meta/Facebook Pixel Installed: ${hasFacebookPixel}
-- Google Tags/Analytics Installed: ${hasGTM}
-- 24/7 Chatbot/Widget Installed: ${hasChatbot}
+        const [copyAnalysis, techAnalysis] = await Promise.all([
+            askKimi(openRouterKey, copyPrompt, "You are a direct response copywriting analyst. Be brutal."),
+            askKimi(openRouterKey, techPrompt, "You are a technical marketing infrastructure auditor.")
+        ]);
 
-Website Text Content (truncated):
-${cleanText}
+        // 3. Orchestrator Synthesis
+        const finalPrompt = `You are a ruthless 8-figure roofing marketing auditor. 
+Synthesize these two agent reports into a final brutal JSON output.
+The company is doing ${tier} in annual revenue. They spend 8-10% on marketing. LSA leads cost $250.
 
-Based on their actual tech stack and copywriting, grade them brutally.
-Provide a JSON response with ONLY the following structure:
+Agent 1 (Copywriting Analysis): ${copyAnalysis}
+Agent 2 (Tech Stack Analysis): ${techAnalysis}
+
+Return ONLY this JSON structure, heavily penalizing them if Agent 2 found no chatbot or pixels:
 {
-    "monthlyBleed": "[A formatted dollar amount between $8,000 and $45,000. Calculate exactly 14% of their assumed ad spend plus Agency Retainer. Include the $ sign and commas]",
+    "monthlyBleed": "[Calculate exact dollar amount lost to Speed-to-Lead lag and Agency Retainer waste based on their ${tier} revenue bracket. Formatted string: e.g. $14,500]",
     "scores": {
-        "Speed-to-Lead Velocity": [Score 1-5. 1 if no chatbot/fast booking.],
-        "LSA & Cost-Per-Lead Efficiency": [Score 1-5 based on text detail and tracking tags.],
-        "Direct Response Copywriting": [Score 1-5 based on text aggressiveness.],
-        "Agency & Tech Stack Hygiene": [Score 1-5. If no GTM or Facebook pixel, score is 1.]
+        "Speed-to-Lead Velocity": [Final numeric score 1.0-5.0],
+        "LSA & Cost-Per-Lead Efficiency": [Final numeric score 1.0-5.0],
+        "Direct Response Copywriting": [Final numeric score 1.0-5.0],
+        "Agency & Tech Stack Hygiene": [Final numeric score 1.0-5.0]
     },
     "recommendations": [
-        { "activity": "Name of AI/Ops Fix", "reason": "Specific aggressive reason tailored to the actual gaps found and the financial bleed calculated.", "priority": 1 }
+        { "activity": "AI Voice Agents", "reason": "Specific aggressive reason based on the agent reports.", "priority": 1 },
+        { "activity": "Programmatic SEO", "reason": "Specific reason...", "priority": 2 },
+        { "activity": "SMS Nurturing", "reason": "Specific reason...", "priority": 3 },
+        { "activity": "Pixel Architecture", "reason": "Specific reason...", "priority": 4 }
     ]
-}
-Provide exactly 4 recommendations mapped to their lowest scores. Call out the "agency retainer" tax, the "LSA $250 CPL" trap, and pitch AI Voice Agents, SMS nurturing, and programmatic SEO. Return ONLY valid JSON.`;
+}`;
+        
+        let finalOutput = await askKimi(openRouterKey, finalPrompt, "You output pure unformatted JSON. Just { ... }");
+        finalOutput = finalOutput.replace(/```json/g, '').replace(/```/g, '').trim();
 
-        const inferenceController = new AbortController();
-        const inferenceTimeout = setTimeout(() => inferenceController.abort(), 20000); 
-
-        // Switched from Haiku to Sonnet 3.5 - Maximum intelligence out of Anthropic, with extremely fast native JSON throughput
-        const orRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-                "Content-Type": "application/json",
-                "HTTP-Referer": "https://vercel.com",
-                "X-Title": "Audit Swarm"
-            },
-            signal: inferenceController.signal,
-            body: JSON.stringify({
-                model: "anthropic/claude-3.5-sonnet", 
-                messages: [{ role: "user", content: prompt }],
-                temperature: 0.1
-            })
-        });
-
-        clearTimeout(inferenceTimeout);
-
-        const aiData = await orRes.json();
-        if (aiData.error) throw new Error(aiData.error.message || "OpenRouter Error");
-
-        let resultText = aiData.choices[0].message.content;
-        resultText = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
-
-        return new Response(resultText, {
+        return new Response(finalOutput, {
             status: 200,
             headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         });
 
     } catch (error) {
         console.error('Audit API Error:', error);
-        
         return new Response(JSON.stringify({
             monthlyBleed: "$18,500+",
-            scores: {
-                "Speed-to-Lead Velocity": 1.5,
-                "LSA & Cost-Per-Lead Efficiency": 2.0,
-                "Direct Response Copywriting": 2.5,
-                "Agency & Tech Stack Hygiene": "Timeout."
-            },
+            scores: { "Speed-to-Lead Velocity": 1.5, "LSA & Cost-Per-Lead Efficiency": 2.0, "Direct Response Copywriting": 2.5, "Agency & Tech Stack Hygiene": "Timeout." },
             recommendations: [
-                { activity: "Fatal API Timeout Detected", reason: "Your website failed to load inside our scraping orchestrator or blocked the payload. This signifies major technical friction on your DOM.", priority: 1 },
+                { activity: "Fatal API Timeout Detected", reason: "Your website failed to load or blocked the payload.", priority: 1 },
                 { activity: "AI Voice Agents", reason: "LSA Leads cost $250. You are bleeding them. Implement an autonomous inbound voice system.", priority: 2 },
                 { activity: "Programmatic SEO", reason: "Your current agency is burning budget on generic localized zip codes.", priority: 3 },
                 { activity: "SMS Nurturing", reason: "Speed to lead is king. If your human rep doesn't text in 4 minutes, the job is dead.", priority: 4 }
             ]
-        }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-        });
+        }), { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
     }
 }

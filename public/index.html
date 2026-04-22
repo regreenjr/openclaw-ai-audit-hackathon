@@ -34,7 +34,7 @@
                 </select>
             </div>
             <button type="submit" id="submitBtn" class="w-full bg-orange-600 text-white font-bold text-xl px-8 py-4 rounded-lg hover:bg-orange-500 transition-colors flex items-center justify-center gap-3 shadow-lg shadow-orange-600/20 mt-2">
-                <span>Run Live Distributed Swarm Audit</span>
+                <span>Run Distributed Moonshot K2.6 Swarm Audit</span>
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
             </button>
         </form>
@@ -139,13 +139,8 @@
             }, 3000);
 
             try {
-                // Route directly to the Kimi Swarm server hosted on ngrok/local, NOT vercel edge functions
-                // (Note: in production this needs to be a real domain/IP mapping, but for local testing we point to localhost)
-                const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-                                ? 'http://localhost:3334' 
-                                : 'https://YOUR_NGROK_OR_IP.ngrok.io'; // Replace with your actual forwarding tunnel URL before sending to client
-                                
-                const response = await fetch(`${baseUrl}/api/audit`, {
+                // Route to the Vercel Edge compute endpoint which now runs the Swarm natively
+                const response = await fetch(`/api/audit`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ companyUrl: urlInput, revenueTier: revenue })
@@ -204,7 +199,7 @@
             } catch (err) {
                 appendLog(`> [FATAL] Swarm connection failed or timed out: ${err.message}`);
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Run Live Distributed Swarm Audit';
+                submitBtn.innerHTML = 'Run Distributed Moonshot K2.6 Swarm Audit';
                 hero.classList.remove('opacity-50', 'pointer-events-none');
             }
         });
