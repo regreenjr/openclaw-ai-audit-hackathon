@@ -21,7 +21,7 @@
             Zero-Click AI Infrastructure Audit
         </div>
         <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight gradient-text">Roofing Ops AI Audit</h1>
-        <p class="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">Drop your roofing company URL below. My 7-agent swarm will audit your lead-capture speed, SEO footprint, and back-office bottlenecks to calculate exactly how much revenue you are bleeding to competitors.</p>
+        <p class="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">Drop your roofing company URL below. My 4-agent swarm will audit your lead-capture speed, quote velocity, and back-office bottlenecks to calculate exactly how much revenue you are bleeding to competitors.</p>
         
         <form id="auditForm" class="mt-12 flex flex-col sm:flex-row gap-4 justify-center items-center">
             <input type="url" id="companyUrl" placeholder="https://your-roofing-company.com" required class="w-full sm:w-96 bg-gray-900 border border-gray-700 rounded-lg px-6 py-4 text-lg focus:outline-none focus:border-orange-500 transition-colors shadow-inner" />
@@ -76,7 +76,7 @@
         <div class="mt-12 text-center glass-panel p-12 rounded-2xl border border-orange-500/20 bg-gradient-to-b from-orange-900/10 to-transparent relative overflow-hidden">
             <div class="absolute inset-0 bg-orange-500/5 blur-3xl rounded-full transform -translate-y-1/2"></div>
             <h2 class="text-3xl lg:text-4xl font-black text-white mb-4 relative z-10">Stop Bleeding Revenue.</h2>
-            <p class="text-gray-400 mb-8 max-w-2xl mx-auto text-lg relative z-10">You are losing storm leads to missed calls and losing jobs to slow quotes. Book a rapid infrastructure call to deploy this exact autonomous AI machine into your roofing business.</p>
+            <p class="text-gray-400 mb-8 max-w-2xl mx-auto text-lg relative z-10">You are losing high-intent leads to missed calls and losing jobs to slow quotes. Book a rapid infrastructure call to deploy this exact autonomous AI machine into your roofing business.</p>
             <a href="https://calendly.com" target="_blank" class="inline-block bg-orange-600 text-white font-bold text-xl px-10 py-5 rounded-xl hover:bg-orange-500 hover:scale-105 transition-all shadow-[0_0_30px_rgba(249,115,22,0.3)] relative z-10">
                 Book $1k Architecture Call
             </a>
@@ -92,31 +92,29 @@
         const submitBtn = document.getElementById('submitBtn');
 
         const loadingSteps = [
-            "> Spawning Specialist Agents (Inbound, Estimating, Billing, SEO)...",
-            "> Agent 1: Scanning local SEO and storm-chaser footprint...",
-            "> Agent 2: Auditing 24/7 inbound lead capture and response velocity...",
-            "> Agent 3: Analyzing back-office automation (estimating, invoicing, CRM)...",
-            "> Critic Agent: Calculating missed revenue from dropped calls...",
+            "> Spawning Specialist Agents (Inbound, Estimating, Sales, A/R)...",
+            "> Agent 1: Auditing 24/7 inbound lead capture and weather-surge capacity...",
+            "> Agent 2: Analyzing quote generation velocity and satellite map APIs...",
+            "> Agent 3: Scanning automated pipeline nurturing and ghosting rates...",
+            "> Agent 4: Calculating cash flow drag from delayed insurance ACV checks...",
             "> Synthesizer Agent: Finalizing AI Infrastructure Upgrade Roadmap..."
         ];
 
         function simulateSwarmBackend() {
-            // Roofing specific scoring logic
+            // Roofing specific scoring logic exactly aligned to the 4 pain points
             const scores = {
-                "Lead Capture (Voice/Web)": Math.floor(Math.random() * 2) + 1, // Usually bad
-                "Quote Velocity": Math.floor(Math.random() * 3) + 1,
-                "Automated Follow-up": Math.floor(Math.random() * 2) + 1, // Usually bad
-                "Back-Office Billing": Math.floor(Math.random() * 3) + 2,
-                "Local SEO Dominance": Math.floor(Math.random() * 3) + 1
+                "24/7 Storm Lead Capture": Math.floor(Math.random() * 2) + 1, 
+                "Satellite Quote Velocity": Math.floor(Math.random() * 2) + 1,
+                "Automated Deal Nurturing": Math.floor(Math.random() * 2) + 1, 
+                "A/R & Insurance Chasing": Math.floor(Math.random() * 2) + 1 
             };
-            const avg = Object.values(scores).reduce((a, b) => a + b) / 5;
+            const avg = Object.values(scores).reduce((a, b) => a + b) / 4;
             
             const recommendations = [];
-            if (scores["Lead Capture (Voice/Web)"] <= 2) recommendations.push({ activity: "24/7 AI Voice Agent", reason: "You are missing high-intent calls when crews are on the roof. Deploy an AI receptionist to answer, qualify, and book inspections instantly.", priority: 1 });
-            if (scores["Quote Velocity"] <= 2) recommendations.push({ activity: "Instant Satellite Estimating", reason: "Manual measurements kill deals. Integrate Aerial/Satellite map APIs with AI to fire preliminary quotes via SMS in minutes.", priority: 2 });
-            if (scores["Automated Follow-up"] <= 2) recommendations.push({ activity: "Relentless SMS Nurturing", reason: "Unsigned quotes are going cold. Build an automated SMS/Email agent to persistently follow up with homeowners until a yes or no.", priority: 3 });
-            if (scores["Back-Office Billing"] <= 3) recommendations.push({ activity: "AI Accounts Receivable Hound", reason: "Cash flow is trapped in unpaid progression invoices. Deploy an AI agent to automatically chase down checks from clients and insurance companies.", priority: 4 });
-            if (scores["Local SEO Dominance"] <= 2) recommendations.push({ activity: "Programmatic Local SEO", reason: "Competitors are outranking you in specific zip codes. Build an AI content engine to automatically generate specialized landing pages for every neighborhood you serve.", priority: 5 });
+            if (scores["24/7 Storm Lead Capture"] <= 2) recommendations.push({ activity: "AI Voice Agent (Surge Protection)", reason: "You miss 30%+ of high-intent calls when crews are on the roof. Deploy an AI receptionist to answer 100 concurrent calls, qualify the zip code, and book inspections instantly 24/7.", priority: 1 });
+            if (scores["Satellite Quote Velocity"] <= 2) recommendations.push({ activity: "Instant Satellite Estimating", reason: "It takes days to roll a truck and email a quote. We integrate EagleView/Hover APIs with AI to text a preliminary 'Good, Better, Best' quote to the homeowner in 45 seconds.", priority: 2 });
+            if (scores["Automated Deal Nurturing"] <= 2) recommendations.push({ activity: "Autonomous SMS Closer", reason: "Sales reps hate following up. Unsigned quotes go cold. Build an automated SMS agent to relentlessly follow up on Days 2, 4, and 7, answering objections until they sign.", priority: 3 });
+            if (scores["A/R & Insurance Chasing"] <= 2) recommendations.push({ activity: "AI Accounts Receivable Hound", reason: "Chasing ACV checks and final payments kills cash flow. Deploy an AI agent to sync with your CRM (JobNimbus/AccuLynx) to instantly chase down checks from clients and insurance companies.", priority: 4 });
             
             return {
                 scores,
