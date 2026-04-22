@@ -18,15 +18,15 @@
     <!-- HERO SECTION -->
     <div id="hero" class="w-full max-w-4xl text-center space-y-8 transition-opacity duration-500">
         <div class="inline-block px-4 py-1.5 rounded-full border border-orange-900/50 bg-orange-950/30 text-xs font-bold tracking-wide text-orange-500 uppercase mb-2 shadow-[0_0_15px_rgba(249,115,22,0.2)]">
-            Zero-Click Revenue Leak Audit
+            Active Neural Footprint Audit
         </div>
         <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight gradient-text">Stop Leaking Revenue</h1>
-        <p class="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">Drop your roofing company URL below. My Swarm orchestrator will audit your Lead-Gen Footprint, Response Velocity, and Pipeline Hygiene to calculate exactly how much topline revenue you are bleeding to competitors.</p>
+        <p class="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">Drop your roofing company URL below. My live Swarm orchestrator will actively scrape your DOM, scan your marketing tech-stack, and evaluate your lead-capture friction to calculate exactly how much topline revenue you are bleeding to competitors.</p>
         
         <form id="auditForm" class="mt-12 flex flex-col sm:flex-row gap-4 justify-center items-center">
             <input type="url" id="companyUrl" placeholder="https://your-roofing-company.com" required class="w-full sm:w-96 bg-gray-900 border border-gray-700 rounded-lg px-6 py-4 text-lg focus:outline-none focus:border-orange-500 transition-colors shadow-inner" />
             <button type="submit" id="submitBtn" class="w-full sm:w-auto bg-orange-600 text-white font-bold text-lg px-8 py-4 rounded-lg hover:bg-orange-500 transition-colors flex items-center justify-center gap-3 shadow-lg shadow-orange-600/20">
-                <span>Run The Audit</span>
+                <span>Run Live Audit</span>
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
             </button>
         </form>
@@ -36,25 +36,25 @@
     <div id="loading" class="hidden w-full max-w-2xl mt-12 glass-panel rounded-xl p-6 font-mono text-sm text-orange-400 transition-opacity">
         <div class="flex items-center gap-3 mb-4 border-b border-gray-800 pb-4">
             <div class="loader"></div>
-            <span class="text-white text-lg font-semibold">Swarm Orchestrator Active</span>
+            <span id="agentStatus" class="text-white text-lg font-semibold">Allocating compute...</span>
         </div>
-        <div id="terminalText" class="space-y-2 opacity-80">
-            <div>> Scanning Speed-to-Lead Response Velocity...</div>
+        <div id="terminalText" class="space-y-2 opacity-80 h-40 overflow-y-auto w-full">
+            <div>> Connecting to target URL...</div>
         </div>
     </div>
 
     <!-- RESULTS DASHBOARD -->
     <div id="results" class="hidden w-full max-w-5xl mt-12 space-y-8 animate-fade-in pb-20">
         <div class="text-center mb-12">
-            <h2 class="text-4xl font-bold text-white">Sales Audit Complete.</h2>
-            <p class="text-gray-400 mt-2 text-lg">Pipeline hygiene collapse and Lead-Gen vulnerabilities identified.</p>
+            <h2 class="text-4xl font-bold text-white">Live Audit Complete.</h2>
+            <p class="text-gray-400 mt-2 text-lg">Pipeline hygiene collapse and marketing stack vulnerabilities identified.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- SCORE CARD -->
             <div class="glass-panel p-8 rounded-2xl flex flex-col items-center justify-center text-center relative overflow-hidden">
                 <div class="absolute inset-0 bg-orange-500/5"></div>
-                <div class="text-xs text-orange-500 font-bold uppercase tracking-widest mb-2 relative z-10">Sales Pipeline Score</div>
+                <div class="text-xs text-orange-500 font-bold uppercase tracking-widest mb-2 relative z-10">Live Site Matrix Score</div>
                 <div id="avgScore" class="text-7xl font-black text-white relative z-10">0.0</div>
                 <div class="text-gray-500 mt-2 font-medium relative z-10">out of 5.0</div>
             </div>
@@ -76,7 +76,7 @@
         <div class="mt-12 text-center glass-panel p-12 rounded-2xl border border-orange-500/20 bg-gradient-to-b from-orange-900/10 to-transparent relative overflow-hidden">
             <div class="absolute inset-0 bg-orange-500/5 blur-3xl rounded-full transform -translate-y-1/2"></div>
             <h2 class="text-3xl lg:text-4xl font-black text-white mb-4 relative z-10">Stop the Bleeding.</h2>
-            <p class="text-gray-400 mb-8 max-w-2xl mx-auto text-lg relative z-10">You are losing 70-80% of your revenue in the gap between lead and contract. Book a rapid infrastructure call to plug these leaks with an automated AI sales machine.</p>
+            <p class="text-gray-400 mb-8 max-w-2xl mx-auto text-lg relative z-10">Based on your live website data, you are losing massive revenue in the gap between lead and contract. Book a rapid infrastructure call to plug these leaks with an automated AI sales machine.</p>
             <a href="https://calendly.com" target="_blank" class="inline-block bg-orange-600 text-white font-bold text-xl px-10 py-5 rounded-xl hover:bg-orange-500 hover:scale-105 transition-all shadow-[0_0_30px_rgba(249,115,22,0.3)] relative z-10">
                 Book $1k Architecture Call
             </a>
@@ -90,89 +90,101 @@
         const results = document.getElementById('results');
         const terminalText = document.getElementById('terminalText');
         const submitBtn = document.getElementById('submitBtn');
+        const statusSpan = document.getElementById('agentStatus');
 
-        const loadingSteps = [
-            "> Spawning Sales Analysis Agents...",
-            "> Agent 1: Measuring 'Speed-to-lead' gap vulnerabilities...",
-            "> Agent 2: Analyzing 'The Lead Trap' (LSA dependence & shared-lead tax)...",
-            "> Agent 3: Evaluating pipeline hygiene & abandoned quote decay...",
-            "> Agent 4: Calculating revenue leaked between lead and contract...",
-            "> Synthesizer Agent: Finalizing AI Architecture Blueprint..."
-        ];
-
-        function simulateSwarmBackend() {
-            const scores = {
-                "Speed-to-Lead Velocity": Math.floor(Math.random() * 2) + 1, 
-                "LSA & Shared-Lead Reliance": Math.floor(Math.random() * 2) + 1,
-                "Pipeline Hygiene (Follow-up)": Math.floor(Math.random() * 2) + 1, 
-                "Independent Lead Gen": Math.floor(Math.random() * 2) + 1 
-            };
-            const avg = Object.values(scores).reduce((a, b) => a + b) / 4;
-            
-            const recommendations = [];
-            if (scores["Speed-to-Lead Velocity"] <= 2) recommendations.push({ activity: "Zero-Second Speed-to-Lead AI", reason: "Impact: 70-80% of revenue leaks between lead and contract due to slow response times. We deploy a 24/7 AI Voice/SMS agent to contact every single inbound lead within 10 seconds of form submission.", priority: 1 });
-            if (scores["Pipeline Hygiene (Follow-up)"] <= 2) recommendations.push({ activity: "Autonomous SMS Quote Closer", reason: "Impact: 50% of quotes are never followed up on in 15 days, stranding your average close rate at 27%. We build an autonomous AI system to relentlessly follow up on every unsigned quote until they reply.", priority: 2 });
-            if (scores["LSA & Shared-Lead Reliance"] <= 2) recommendations.push({ activity: "Exclusive Ad Generation Engine", reason: "The Lead Trap: 67% of roofers report LSA quality collapse, and shared-lead platforms (Angi) impose a massive tax. We bypass this by building an autonomous Meta/Google Ad engine that generates proprietary, exclusive leads you don't share with competitors.", priority: 3 });
-            
-            return {
-                scores,
-                avgScore: avg.toFixed(1),
-                recommendations: recommendations.sort((a,b) => a.priority - b.priority)
-            };
+        function appendLog(text) {
+            const el = document.createElement('div');
+            el.textContent = text;
+            terminalText.appendChild(el);
+            terminalText.scrollTop = terminalText.scrollHeight;
         }
 
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            const url = document.getElementById('companyUrl').value;
+            
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<div class="loader"></div>';
             hero.classList.add('opacity-50', 'pointer-events-none');
             loading.classList.remove('hidden');
 
-            let step = 0;
-            const interval = setInterval(() => {
-                if(step < loadingSteps.length) {
-                    const el = document.createElement('div');
-                    el.textContent = loadingSteps[step];
-                    terminalText.appendChild(el);
-                    step++;
-                } else {
-                    clearInterval(interval);
-                    const data = simulateSwarmBackend();
-                    document.getElementById('avgScore').textContent = data.avgScore;
-                    
-                    const heatmap = document.getElementById('heatmapGrid');
-                    heatmap.innerHTML = '';
-                    for (const [key, val] of Object.entries(data.scores)) {
-                        let colorClass = val >= 4 ? 'text-green-500 bg-green-500/10 border-green-500/20' : 
-                                         val >= 3 ? 'text-orange-400 bg-orange-500/10 border-orange-500/20' : 
-                                         'text-red-500 bg-red-500/10 border-red-500/20';
-                        heatmap.innerHTML += `
-                            <div class="p-4 rounded-xl border ${colorClass} flex justify-between items-center transition-transform hover:scale-[1.02]">
-                                <span class="font-bold text-gray-200">${key}</span>
-                                <span class="text-2xl font-black">L${val}</span>
-                            </div>
-                        `;
-                    }
+            appendLog(`> Handshake initiated with ${new URL(url).hostname}...`);
+            setTimeout(() => {
+                appendLog("> Agent 1 (Crawler): Identifying marketing pixel injections...");
+                statusSpan.textContent = "Scraping DOM & Tech Stack";
+            }, 2000);
+            
+            setTimeout(() => {
+                appendLog("> Agent 2 (NLP): Analyzing direct response copywriting models...");
+            }, 5500);
 
-                    const porters = document.getElementById('portersList');
-                    porters.innerHTML = '';
-                    data.recommendations.forEach((rec, idx) => {
-                        porters.innerHTML += `
-                            <div class="flex gap-5 items-start p-6 bg-white/5 rounded-xl border border-white/10 hover:border-orange-500/30 transition-colors">
-                                <div class="w-10 h-10 rounded-full bg-orange-600 flex items-center justify-center font-black text-white shrink-0 shadow-lg">${idx+1}</div>
-                                <div>
-                                    <h4 class="text-white font-bold text-xl">${rec.activity}</h4>
-                                    <p class="text-gray-400 mt-2 leading-relaxed">${rec.reason}</p>
-                                </div>
-                            </div>
-                        `;
-                    });
+            setTimeout(() => {
+                appendLog("> Agent 3 (Orchestrator): Synthesizing LLM payload for final scoring matrix...");
+                statusSpan.textContent = "Connecting to LLM (Gemini 3.1 Pro)...";
+            }, 8500);
 
+            try {
+                // Live backend logic execution
+                const response = await fetch('/api/audit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ companyUrl: url })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    appendLog(`> [ERROR] ${data.error}`);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Try Again';
+                    return;
+                }
+                
+                appendLog("> Audit completed successfully. Rendering heat map.");
+
+                document.getElementById('avgScore').textContent = data.avgScore;
+                const heatmap = document.getElementById('heatmapGrid');
+                heatmap.innerHTML = '';
+                
+                for (const [key, val] of Object.entries(data.scores)) {
+                    let cv = parseFloat(val);
+                    let colorClass = cv >= 4 ? 'text-green-500 bg-green-500/10 border-green-500/20' : 
+                                     cv >= 3 ? 'text-orange-400 bg-orange-500/10 border-orange-500/20' : 
+                                     'text-red-500 bg-red-500/10 border-red-500/20';
+                    heatmap.innerHTML += `
+                        <div class="p-4 rounded-xl border ${colorClass} flex justify-between items-center transition-transform hover:scale-[1.02]">
+                            <span class="font-bold text-gray-200">${key.replace(' (Sales)', '').replace(' (Lead Gen)', '')}</span>
+                            <span class="text-2xl font-black">L${val}</span>
+                        </div>
+                    `;
+                }
+
+                const porters = document.getElementById('portersList');
+                porters.innerHTML = '';
+                data.recommendations.forEach((rec, idx) => {
+                    porters.innerHTML += `
+                        <div class="flex gap-5 items-start p-6 bg-white/5 rounded-xl border border-white/10 hover:border-orange-500/30 transition-colors">
+                            <div class="w-10 h-10 rounded-full bg-orange-600 flex items-center justify-center font-black text-white shrink-0 shadow-lg">${idx+1}</div>
+                            <div>
+                                <h4 class="text-white font-bold text-xl">${rec.activity}</h4>
+                                <p class="text-gray-400 mt-2 leading-relaxed">${rec.reason}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                setTimeout(() => {
                     loading.classList.add('hidden');
                     hero.classList.add('hidden');
                     results.classList.remove('hidden');
-                }
-            }, 800);
+                }, 1000);
+
+            } catch (err) {
+                appendLog(`> [FATAL] Server connection failed: ${err.message}`);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Try Again';
+            }
         });
     </script>
 </body>
