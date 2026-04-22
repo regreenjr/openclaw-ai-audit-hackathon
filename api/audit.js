@@ -4,10 +4,10 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { companyUrl } = req.body;
-        if (!companyUrl) {
-            return res.status(400).json({ error: 'Missing companyUrl' });
-        }
+        const { companyUrl, revenueTier } = req.body;
+        if (!companyUrl) return res.status(400).json({ error: 'Missing companyUrl' });
+        
+        const tier = revenueTier || "$3-5M";
 
         // 1. Fetch the target website's raw HTML
         const siteRes = await fetch(companyUrl, { 
@@ -15,51 +15,56 @@ export default async function handler(req, res) {
         });
         const html = await siteRes.text();
 
-        // 2. Perform basic technical footprint scraping
+        // 2. Execute technical DOM footprint scraping
         const hasFacebookPixel = html.includes('fbevents.js') || html.includes('fbq(');
         const hasGTM = html.includes('googletagmanager.com') || html.includes('gtag(') || html.includes('analytics.js');
         const hasChatbot = html.includes('intercom') || html.includes('drift') || html.includes('podium') || html.includes('chat') || html.includes('widget');
-        const hasCalendly = html.includes('calendly.com');
+        
+        // 3. Clean HTML for LLM payload
+        const cleanText = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+                              .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+                              .replace(/<[^>]+>/g, ' ')
+                              .replace(/\s+/g, ' ')
+                              .substring(0, 15000); 
 
-        // 3. Clean the HTML down to text to send to the LLM (bypassing massive token limits)
-        const cleanText = html
-            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-            .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-            .replace(/<[^>]+>/g, ' ') // strip remaining tags
-            .replace(/\s+/g, ' ') // collapse whitespace
-            .substring(0, 15000); // Hard limit to first 15k chars (~4k tokens)
-
-        // 4. Construct the prompt for the actual audit
+        // 4. Construct the prompt with rigorous financial routing data
         const prompt = `You are a ruthless 8-figure roofing marketing auditor. 
 Analyze this website's text and technical metadata to grade their sales/marketing infrastructure.
+The company is doing ${tier} in annual revenue.
+
+INDUSTRY BENCHMARKS & LOGIC TO APPLY:
+- At ${tier} revenue, they spend 8-10% on marketing.
+- LSA (Google Local Services Ads) storm leads cost $200-$250+.
+- Marketing agencies charge $2k-$5k/mo on retainer.
+- If they do not have a chatbot/booking widget (24/7 capture), they are losing at least 4 LSA leads per week ($1,000 in sunk ad cost + lost job value).
+- If they do not have programmatic local SEO (specific city pages), 65% of their Google Search budget is hitting wrong zip codes.
 
 Website URL: ${companyUrl}
-Tech Stack Discovered via DOM scrape: 
+Tech Stack Discovered via live DOM scrape: 
 - Meta/Facebook Pixel Installed: ${hasFacebookPixel}
-- Google Tags Installed: ${hasGTM}
+- Google Tags/Analytics Installed: ${hasGTM}
 - 24/7 Chatbot/Widget Installed: ${hasChatbot}
-- Direct Calendar Booking (Calendly etc): ${hasCalendly}
 
 Website Text Content (truncated):
 ${cleanText}
 
-Based on the actual tech stack and copywriting, grade them brutally.
+Based on their actual tech stack and copywriting, grade them brutally.
 Provide a JSON response with ONLY the following structure:
 {
+    "monthlyBleed": "[A formatted dollar amount between $8,000 and $45,000 depending on their revenue tier and how bad their tech stack is. Include the $ sign and commas]",
     "scores": {
-        "Lead Capture Friction": [Score 1-5. 1 if no chatbot/fast booking.],
-        "Local SEO & Service Depth": [Score 1-5 based on text detail.],
+        "Speed-to-Lead Velocity": [Score 1-5. 1 if no chatbot/fast booking.],
+        "LSA & Cost-Per-Lead Efficiency": [Score 1-5 based on text detail and tracking tags.],
         "Direct Response Copywriting": [Score 1-5 based on text aggressiveness.],
-        "Marketing Tech Stack": [Score 1-5 based strictly on the Pixels/Tags found above.]
+        "Agency & Tech Stack Hygiene": [Score 1-5. If no GTM or Facebook pixel, score is 1.]
     },
-    "avgScore": "[Average formatted to 1 decimal]",
     "recommendations": [
-        { "activity": "Name of AI/Ops Fix", "reason": "Specific aggressive reason tailored to the actual gaps found in their site data", "priority": 1 }
+        { "activity": "Name of AI/Ops Fix", "reason": "Specific aggressive reason tailored to the actual gaps found and the financial bleed calculated.", "priority": 1 }
     ]
 }
-Provide exactly 4 recommendations mapped to their lowest scores. Focus on AI voice, SMS nurturing, programmatic SEO, and API integrations. Return ONLY valid JSON.`;
+Provide exactly 4 recommendations mapped to their lowest scores. Call out the "agency retainer" tax, the "LSA $250 CPL" trap, and pitch AI Voice Agents, SMS nurturing, and programmatic SEO. Return ONLY valid JSON.`;
 
-        // 5. Route through OpenRouter to Gemini 3.1 Pro
+        // 5. Fire to Gemini 3.1 Pro via OpenRouter
         const orRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -75,14 +80,9 @@ Provide exactly 4 recommendations mapped to their lowest scores. Focus on AI voi
         });
 
         const aiData = await orRes.json();
-        
-        if (aiData.error) {
-            throw new Error(aiData.error.message || "OpenRouter Error");
-        }
+        if (aiData.error) throw new Error(aiData.error.message || "OpenRouter Error");
 
         const resultText = aiData.choices[0].message.content;
-        
-        // Ensure returning clean JSON
         res.status(200).json(JSON.parse(resultText));
 
     } catch (error) {
