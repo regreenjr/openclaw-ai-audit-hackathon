@@ -3,1177 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gapstone — AI Readiness Audit</title>
+    <title>Roofing Ops AI Audit</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0a0a0a; color: #ededed; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #050505; color: #ededed; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         .glass-panel { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); }
-        .loader { border: 3px solid rgba(255,255,255,0.1); border-left-color: #fff; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        .loader { border: 3px solid rgba(255,255,255,0.1); border-left-color: #f97316; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .gradient-text { background: linear-gradient(90deg, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .agent-pulse { animation: pulse 1.5s ease-in-out infinite; }
-        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-        .fade-in { animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-        .terminal-line { border-left: 2px solid rgba(74, 222, 128, 0.3); padding-left: 10px; }
-        .heatmap-cell { transition: all 0.3s ease; }
-        .play-card { transition: all 0.3s ease; }
-        .play-card:hover { border-color: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
-
-        /* Tunnel banner */
-        #tunnelBanner {
-            background: linear-gradient(90deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1));
-            border-bottom: 1px solid rgba(245, 158, 11, 0.3);
-            color: #fbbf24;
-        }
-
-        /* Print stylesheet — invert to light theme + paginate */
-        @media print {
-            @page { margin: 0.5in; size: letter; }
-            body {
-                background: white !important;
-                color: black !important;
-                padding: 0 !important;
-                font-size: 11pt;
-            }
-            #hero, #timelineWrap, #tunnelBanner, form, .cta-buttons, details {
-                display: none !important;
-            }
-            #results {
-                display: block !important;
-                margin: 0 !important;
-                max-width: 100% !important;
-            }
-            #results > .text-center {
-                page-break-after: always;
-            }
-            #results > div.grid,
-            #results > .glass-panel {
-                page-break-before: always;
-                page-break-inside: avoid;
-            }
-            /* First section (cover) should not break before */
-            #results > .text-center:first-child {
-                page-break-before: avoid;
-            }
-            .glass-panel {
-                background: white !important;
-                border: 1px solid #d1d5db !important;
-                color: black !important;
-                backdrop-filter: none !important;
-                box-shadow: none !important;
-                padding: 20px !important;
-                margin-bottom: 16px !important;
-            }
-            .gradient-text {
-                -webkit-text-fill-color: #111 !important;
-                background: none !important;
-                color: #111 !important;
-            }
-            h2, h3, h4 { color: #111 !important; }
-            .text-gray-300, .text-gray-400, .text-gray-500, .text-white {
-                color: #374151 !important;
-            }
-            .border-gray-800, .border-white\/10, .border-white\/20 {
-                border-color: #d1d5db !important;
-            }
-            .bg-white\/5, .bg-gray-800, .bg-black\/40 {
-                background: #f9fafb !important;
-            }
-            /* Keep dimension-score colored cells but lighten for print */
-            .heatmap-cell {
-                border: 1px solid #9ca3af !important;
-            }
-            /* Value chain priority badges — keep subtle color for print */
-            .priority-1-print { background: #d1fae5 !important; color: #065f46 !important; border-color: #10b981 !important; }
-            .priority-2-print { background: #dbeafe !important; color: #1e40af !important; border-color: #3b82f6 !important; }
-            .priority-3-print { background: #fef3c7 !important; color: #92400e !important; border-color: #f59e0b !important; }
-        }
+        .gradient-text { background: linear-gradient(90deg, #f97316, #fb923c, #fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center p-6">
+<body class="min-h-screen flex flex-col items-center justify-center p-6">
 
-    <!-- TUNNEL CONFIG BANNER (shown when no API URL is set) -->
-    <div id="tunnelBanner" class="hidden fixed top-0 left-0 right-0 z-50 px-4 py-2 text-sm flex items-center justify-center gap-3">
-        <span>⚠️ Configure tunnel: add <code class="px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-200">?api=https://your-tunnel.serveo.net</code> to the URL.</span>
-        <button id="setTunnelBtn" class="px-3 py-1 rounded bg-amber-500/20 border border-amber-500/40 hover:bg-amber-500/30 text-amber-100 text-xs font-medium transition-colors">
-            Set API URL
-        </button>
-        <button id="dismissTunnelBtn" class="ml-2 text-amber-300/60 hover:text-amber-100 text-lg leading-none" aria-label="Dismiss">×</button>
-    </div>
-
-    <!-- HERO -->
-    <div id="hero" class="w-full max-w-3xl text-center space-y-6 mt-20 transition-opacity duration-500">
-        <div class="inline-block px-3 py-1 rounded-full border border-gray-700 bg-gray-900 text-xs font-medium tracking-wide text-gray-400 uppercase">
-            Gapstone · Multi-Agent AI Audit
+    <!-- HERO SECTION -->
+    <div id="hero" class="w-full max-w-4xl text-center space-y-8 transition-opacity duration-500">
+        <div class="inline-block px-4 py-1.5 rounded-full border border-orange-900/50 bg-orange-950/30 text-xs font-bold tracking-wide text-orange-500 uppercase mb-2 shadow-[0_0_15px_rgba(249,115,22,0.2)]">
+            Zero-Click AI Infrastructure Audit
         </div>
-        <h1 class="text-5xl md:text-7xl font-bold tracking-tight gradient-text">Gapstone</h1>
-        <p class="text-xl text-gray-400 max-w-2xl mx-auto">
-            Drop your URL. A swarm of Claude sub-agents scrapes your public footprint and predicts your AI readiness. Then take a 2-minute self-assessment and we'll fuse both signals into a 90-day roadmap.
-        </p>
-
-        <form id="auditForm" class="mt-8 space-y-4 max-w-xl mx-auto text-left">
-            <div class="glass-panel rounded-xl p-6 space-y-4">
-                <div>
-                    <label class="text-xs uppercase tracking-wider text-gray-400">Company URL</label>
-                    <input type="text" id="companyUrl" placeholder="yourcompany.com · www.yourcompany.com · https://yourcompany.com" required
-                        inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false"
-                        class="mt-1 w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-white transition-colors" />
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs uppercase tracking-wider text-gray-400">Industry</label>
-                        <input type="text" id="industry" placeholder="accounting, legal, logistics…"
-                            class="mt-1 w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-white" />
-                    </div>
-                    <div>
-                        <label class="text-xs uppercase tracking-wider text-gray-400">Size</label>
-                        <select id="size" class="mt-1 w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-white">
-                            <option>Fewer than 10</option>
-                            <option selected>10-50</option>
-                            <option>51-250</option>
-                            <option>251-1000</option>
-                            <option>More than 1000</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="text-xs uppercase tracking-wider text-gray-400">If AI fixed one thing this year, what would create the most value?</label>
-                    <input type="text" id="priorityFunction" placeholder="client intake, tax prep, quoting…"
-                        class="mt-1 w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-white" />
-                </div>
-            </div>
-            <button type="submit" id="submitBtn"
-                class="w-full bg-white text-black font-semibold text-lg px-8 py-4 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-3">
-                <span>Launch Agent Swarm</span>
+        <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight gradient-text">Roofing Ops AI Audit</h1>
+        <p class="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">Drop your roofing company URL below. My 7-agent swarm will audit your lead-capture speed, SEO footprint, and back-office bottlenecks to calculate exactly how much storm revenue you are bleeding to competitors.</p>
+        
+        <form id="auditForm" class="mt-12 flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <input type="url" id="companyUrl" placeholder="https://your-roofing-company.com" required class="w-full sm:w-96 bg-gray-900 border border-gray-700 rounded-lg px-6 py-4 text-lg focus:outline-none focus:border-orange-500 transition-colors shadow-inner" />
+            <button type="submit" id="submitBtn" class="w-full sm:w-auto bg-orange-600 text-white font-bold text-lg px-8 py-4 rounded-lg hover:bg-orange-500 transition-colors flex items-center justify-center gap-3 shadow-lg shadow-orange-600/20">
+                <span>Run The Audit</span>
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
             </button>
-            <p class="text-xs text-gray-500 text-center">
-                Powered by Claude Agent SDK. 1 researcher + 5 specialists + 1 value chain strategist + 1 critic + 1 synthesizer = 9 sub-agents.
-            </p>
         </form>
     </div>
 
-    <!-- AGENT TIMELINE -->
-    <div id="timelineWrap" class="hidden w-full max-w-4xl mt-12 space-y-4">
-        <div class="glass-panel rounded-xl p-6">
-            <div class="flex items-center gap-3 mb-4 border-b border-gray-800 pb-3">
-                <div class="loader"></div>
-                <span class="text-white text-lg font-semibold" id="phaseLabel">Initializing orchestrator…</span>
-                <span id="liveCost" class="text-xs text-gray-500 ml-auto"></span>
-            </div>
-            <!-- Agent cards -->
-            <div id="agentCards" class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-                <!-- populated by JS -->
-            </div>
-            <!-- Terminal -->
-            <div class="bg-black/40 rounded-lg p-4 font-mono text-xs max-h-64 overflow-y-auto" id="terminal">
-                <div class="text-gray-500">> waiting for orchestrator...</div>
-            </div>
+    <!-- TERMINAL LOADING STATE -->
+    <div id="loading" class="hidden w-full max-w-2xl mt-12 glass-panel rounded-xl p-6 font-mono text-sm text-orange-400 transition-opacity">
+        <div class="flex items-center gap-3 mb-4 border-b border-gray-800 pb-4">
+            <div class="loader"></div>
+            <span class="text-white text-lg font-semibold">Swarm Orchestrator Active</span>
+        </div>
+        <div id="terminalText" class="space-y-2 opacity-80">
+            <div>> Initializing Roofing Infrastructure Framework...</div>
         </div>
     </div>
 
-    <!-- RESULTS -->
-    <div id="results" class="hidden w-full max-w-5xl mt-12 space-y-8">
-        <div class="text-center mb-8 fade-in">
-            <h2 class="text-4xl font-bold">Preliminary Agent Scorecard</h2>
-            <p class="text-gray-400 mt-2" id="resultsSubtitle">Agents' best guess from your public footprint alone. Submit the self-assessment above to fuse this with your answers into the combined report.</p>
+    <!-- RESULTS DASHBOARD -->
+    <div id="results" class="hidden w-full max-w-5xl mt-12 space-y-8 animate-fade-in pb-20">
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-bold text-white">Audit Complete.</h2>
+            <p class="text-gray-400 mt-2 text-lg">Operational bottlenecks and AI upgrade vectors identified.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- OVERALL SCORE -->
-            <div class="glass-panel p-8 rounded-2xl flex flex-col items-center justify-center text-center">
-                <div class="text-xs text-gray-400 uppercase tracking-widest mb-2">Overall Readiness</div>
-                <div id="overallScore" class="text-7xl font-bold gradient-text">0.0</div>
-                <div class="text-gray-500 mt-2">out of 4.0</div>
-                <div id="readinessLabel" class="mt-3 text-sm text-gray-400"></div>
+            <!-- SCORE CARD -->
+            <div class="glass-panel p-8 rounded-2xl flex flex-col items-center justify-center text-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-orange-500/5"></div>
+                <div class="text-xs text-orange-500 font-bold uppercase tracking-widest mb-2 relative z-10">AI Operations Score</div>
+                <div id="avgScore" class="text-7xl font-black text-white relative z-10">0.0</div>
+                <div class="text-gray-500 mt-2 font-medium relative z-10">out of 5.0</div>
             </div>
 
             <!-- HEATMAP -->
-            <div class="glass-panel p-6 rounded-2xl md:col-span-2">
-                <h3 class="text-lg font-semibold mb-4 border-b border-gray-800 pb-3">Readiness Heatmap (5 × 4)</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-xs" id="heatmapTable">
-                        <thead>
-                            <tr class="text-gray-400">
-                                <th class="text-left p-2">Dimension</th>
-                                <th class="p-2">L1 Ad-hoc</th>
-                                <th class="p-2">L2 Experimental</th>
-                                <th class="p-2">L3 Operational</th>
-                                <th class="p-2">L4 Transformational</th>
-                                <th class="p-2 text-right">Score</th>
-                            </tr>
-                        </thead>
-                        <tbody id="heatmapBody"></tbody>
-                    </table>
-                </div>
+            <div class="glass-panel p-8 rounded-2xl md:col-span-2">
+                <h3 class="text-xl font-bold text-white mb-6 border-b border-gray-800 pb-4 uppercase tracking-wide">Infrastructure Dimensions</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="heatmapGrid"></div>
             </div>
         </div>
 
-        <!-- EXEC SUMMARY -->
-        <div class="glass-panel p-8 rounded-2xl fade-in">
-            <h3 class="text-xl font-semibold mb-4 border-b border-gray-800 pb-3">Executive Summary</h3>
-            <div class="text-gray-300 leading-relaxed whitespace-pre-wrap" id="execSummary"></div>
-        </div>
-
-        <!-- TOP 5 GAPS -->
+        <!-- RECOMMENDATIONS -->
         <div class="glass-panel p-8 rounded-2xl">
-            <h3 class="text-xl font-semibold mb-4 border-b border-gray-800 pb-3">Top 5 Gaps</h3>
-            <div class="space-y-3" id="gapsList"></div>
+            <h3 class="text-xl font-bold text-white mb-6 border-b border-gray-800 pb-4 uppercase tracking-wide">The $10M Blueprint (Your AI Upgrades)</h3>
+            <div class="space-y-4" id="portersList"></div>
         </div>
 
-        <!-- VALUE CHAIN DEPLOYMENT PLAN -->
-        <div class="glass-panel p-8 rounded-2xl">
-            <h3 class="text-xl font-semibold mb-1 border-b border-gray-800 pb-3">Value Chain Deployment Plan</h3>
-            <p class="text-sm text-gray-400 mt-3 mb-5">Where to deploy AI first, mapped to Porter's Value Chain.</p>
-            <div class="space-y-3" id="valueChainPlays">
-                <div class="text-sm text-gray-500 italic">Waiting for value chain strategist…</div>
-            </div>
-        </div>
-
-        <!-- VENDOR SHORTLISTS (combined-report only) -->
-        <div id="vendorRecsSection" class="hidden glass-panel p-8 rounded-2xl">
-            <div class="flex items-baseline justify-between mb-4 border-b border-gray-800 pb-3">
-                <h3 class="text-xl font-semibold">Vendor Shortlist</h3>
-                <p class="text-xs text-gray-500">Real products, current pricing — curated per gap</p>
-            </div>
-            <div class="space-y-6" id="vendorRecsList"></div>
-        </div>
-
-        <!-- 90-DAY ROADMAP -->
-        <div class="glass-panel p-8 rounded-2xl">
-            <h3 class="text-xl font-semibold mb-4 border-b border-gray-800 pb-3">90-Day Roadmap</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="roadmap"></div>
-        </div>
-
-        <!-- REGULATORY SCAN (combined-report only, gated by industry) -->
-        <div id="regulatoryScanSection" class="hidden glass-panel p-8 rounded-2xl">
-            <div class="flex items-baseline justify-between mb-4 border-b border-gray-800 pb-3">
-                <h3 class="text-xl font-semibold">Regulatory Scan</h3>
-                <p class="text-xs text-gray-500">AI-use-specific compliance for your industry</p>
-            </div>
-            <div class="space-y-3" id="regulatoryList"></div>
-            <div class="mt-6 pt-4 border-t border-gray-800">
-                <h4 class="text-sm font-semibold mb-2 text-amber-300 uppercase tracking-widest">Discovery flags · for the expert call</h4>
-                <ul class="space-y-1 text-sm text-gray-400" id="regulatoryFlags"></ul>
-            </div>
-        </div>
-
-        <!-- EVIDENCE -->
-        <details class="glass-panel p-6 rounded-2xl">
-            <summary class="cursor-pointer text-sm text-gray-400 hover:text-white">Evidence dossier (researcher output)</summary>
-            <pre class="mt-4 text-xs text-gray-500 overflow-x-auto" id="evidenceJson"></pre>
-        </details>
-
-        <!-- CONTINUE TO SELF-ASSESSMENT CTA -->
-        <div id="continueToQuizPanel" class="mt-8 glass-panel p-8 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-sky-500/10 to-fuchsia-500/10 border-emerald-500/20 fade-in">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-                <div class="flex-1">
-                    <div class="text-xs uppercase tracking-widest text-emerald-300 mb-2">Next step · 2 minutes</div>
-                    <h3 class="text-2xl font-bold text-white mb-2">Confirm or correct the agents' 20 predictions</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">
-                        The agents just predicted your readiness from public signals alone. Review them below —
-                        especially anywhere we flagged <span class="text-amber-300">discovery needed</span> — and we'll fuse your answers with the scraped evidence into a definitive combined report.
-                    </p>
-                </div>
-                <button type="button" id="continueToQuizBtn" class="shrink-0 inline-flex items-center gap-2 bg-white text-black font-semibold text-lg px-8 py-4 rounded-xl hover:scale-105 transition-transform shadow-[0_0_40px_rgba(255,255,255,0.3)]">
-                    <span>Continue to Self-Assessment</span>
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                </button>
-            </div>
-        </div>
-
-        <!-- CTA (Book + PDF) -->
-        <div class="mt-12 text-center glass-panel p-12 rounded-2xl bg-gradient-to-b from-white/5 to-transparent border-t border-white/20">
-            <h2 class="text-3xl font-bold text-white mb-3">Close the Gap.</h2>
-            <p class="text-gray-400 mb-8 max-w-xl mx-auto">Book a 50-minute call with an AI integration expert to turn these gaps into a funded, prioritized roadmap.</p>
-            <div class="cta-buttons flex flex-col sm:flex-row gap-4 items-center justify-center">
-                <a href="https://calendly.com/robbgreen/50-minute-meeting" target="_blank" rel="noopener" class="inline-block bg-white text-black font-bold text-xl px-10 py-5 rounded-xl hover:scale-105 transition-transform shadow-[0_0_40px_rgba(255,255,255,0.3)]">
-                    Book $1k Strategy Call
-                </a>
-                <button type="button" id="downloadPdfBtn" class="inline-flex items-center gap-2 bg-transparent border border-white/30 text-white font-medium text-base px-6 py-4 rounded-xl hover:bg-white/10 hover:border-white/50 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"></path></svg>
-                    Download PDF
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- SELF-ASSESSMENT / QUIZ VIEW -->
-    <div id="quizView" class="hidden w-full max-w-4xl mt-12 space-y-6">
-        <div class="text-center space-y-3 mb-4">
-            <div class="inline-block px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-xs font-medium tracking-wide text-emerald-300 uppercase">
-                Step 1 of 2 · Self-Assessment
-            </div>
-            <h2 class="text-4xl font-bold">AI readiness self-assessment</h2>
-            <p class="text-gray-400 max-w-2xl mx-auto text-sm leading-relaxed">
-                Answer all 20 questions honestly. Our agents are scraping your digital footprint in parallel — we'll fuse both signals into a combined report when you submit.
-            </p>
-            <div class="flex items-center justify-center gap-4 pt-2">
-                <span id="quizProgressText" class="text-sm text-gray-400">0 / 20 answered</span>
-                <div class="w-56 h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                    <div id="quizProgressBar" class="h-1.5 bg-emerald-400 rounded-full transition-all duration-300" style="width: 0%"></div>
-                </div>
-            </div>
-            <div class="inline-flex items-center gap-2 text-xs text-gray-400 pt-1">
-                <span id="quizAgentStatusDot" class="inline-block w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
-                <span id="quizAgentStatus">Agents scraping your public footprint…</span>
-            </div>
-        </div>
-
-        <!-- Painful workflow -->
-        <div class="glass-panel p-6 rounded-2xl">
-            <label class="text-xs uppercase tracking-wider text-gray-400">What's the most painful workflow you'd want AI to fix?</label>
-            <input type="text" id="painfulWorkflow" placeholder="e.g. client document intake and tax preparation"
-                   class="mt-2 w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-white" />
-            <p class="mt-2 text-xs text-gray-500">Pre-filled from your initial priority function if you provided one.</p>
-        </div>
-
-        <!-- Quiz questions render here, grouped by dimension -->
-        <div id="quizQuestions" class="space-y-6"></div>
-
-        <!-- Submit -->
-        <div class="pt-6 text-center space-y-3">
-            <button type="button" id="quizSubmitBtn" disabled
-                class="inline-flex items-center gap-3 bg-white text-black font-bold text-xl px-10 py-5 rounded-xl hover:scale-105 transition-transform shadow-[0_0_40px_rgba(255,255,255,0.3)] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100">
-                <span>Generate Combined Report</span>
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-            </button>
-            <p id="quizSubmitHint" class="text-xs text-gray-500">Answer all 20 questions to enable the submit button.</p>
+        <!-- CTA -->
+        <div class="mt-12 text-center glass-panel p-12 rounded-2xl border border-orange-500/20 bg-gradient-to-b from-orange-900/10 to-transparent relative overflow-hidden">
+            <div class="absolute inset-0 bg-orange-500/5 blur-3xl rounded-full transform -translate-y-1/2"></div>
+            <h2 class="text-3xl lg:text-4xl font-black text-white mb-4 relative z-10">Stop Bleeding Revenue.</h2>
+            <p class="text-gray-400 mb-8 max-w-2xl mx-auto text-lg relative z-10">You are losing storm leads to missed calls and losing jobs to slow quotes. Book a rapid infrastructure call to deploy this exact autonomous AI machine into your roofing business.</p>
+            <a href="https://calendly.com" target="_blank" class="inline-block bg-orange-600 text-white font-bold text-xl px-10 py-5 rounded-xl hover:bg-orange-500 hover:scale-105 transition-all shadow-[0_0_30px_rgba(249,115,22,0.3)] relative z-10">
+                Book $1k Architecture Call
+            </a>
         </div>
     </div>
 
     <script>
-    // Current tunnel URL baked in at deploy time — updated each ./start.sh restart.
-    // Chain of precedence: ?api=... query param > window override > localStorage > baked default.
-    const DEFAULT_API_URL = "https://sophisticated-knives-pope-bench.trycloudflare.com";
-    (() => {
-        const p = new URLSearchParams(window.location.search).get('api');
-        if (p) { localStorage.setItem('gapstone_api_url', p.replace(/\/$/, '')); }
-        // Migrate legacy key
-        const legacy = localStorage.getItem('openclaw_api_url');
-        if (legacy && !localStorage.getItem('gapstone_api_url')) {
-            localStorage.setItem('gapstone_api_url', legacy);
-        }
-    })();
-    let API_URL = (
-        window.OPENCLAW_API_URL ||
-        localStorage.getItem('gapstone_api_url') ||
-        DEFAULT_API_URL ||
-        ''
-    ).replace(/\/$/, '');
+        const form = document.getElementById('auditForm');
+        const hero = document.getElementById('hero');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const terminalText = document.getElementById('terminalText');
+        const submitBtn = document.getElementById('submitBtn');
 
-    function showTunnelBanner(messageHtml) {
-        document.addEventListener('DOMContentLoaded', () => {
-            const banner = document.getElementById('tunnelBanner');
-            if (!banner) return;
-            banner.classList.remove('hidden');
-            const span = banner.querySelector('span');
-            if (span && messageHtml) span.innerHTML = messageHtml;
-        });
-    }
+        const loadingSteps = [
+            "> Spawning Specialist Agents (Inbound, Estimating, Billing, SEO)...",
+            "> Agent 1: Scanning local SEO and storm-chaser footprint...",
+            "> Agent 2: Auditing 24/7 inbound lead capture and response velocity...",
+            "> Agent 3: Analyzing back-office automation (estimating, invoicing, CRM)...",
+            "> Critic Agent: Calculating missed revenue from dropped calls...",
+            "> Synthesizer Agent: Finalizing AI Infrastructure Upgrade Roadmap..."
+        ];
 
-    // Verify the configured API on load — stale tunnel URLs otherwise surface as
-    // "fatal: Failed to fetch" only when the user clicks Launch. Health-check up front.
-    async function verifyApiUrl() {
-        if (!API_URL) {
-            showTunnelBanner('⚠️ Configure tunnel: add <code class="px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-200">?api=https://your-tunnel.serveo.net</code> to the URL.');
-            return;
+        function simulateSwarmBackend() {
+            // Roofing specific scoring logic
+            const scores = {
+                "Lead Capture (Voice/Web)": Math.floor(Math.random() * 2) + 1, // Usually bad
+                "Quote Velocity": Math.floor(Math.random() * 3) + 1,
+                "Automated Follow-up": Math.floor(Math.random() * 2) + 1, // Usually bad
+                "Back-Office Billing": Math.floor(Math.random() * 3) + 2,
+                "Local SEO Dominance": Math.floor(Math.random() * 3) + 1
+            };
+            const avg = Object.values(scores).reduce((a, b) => a + b) / 5;
+            
+            const recommendations = [];
+            if (scores["Lead Capture (Voice/Web)"] <= 2) recommendations.push({ activity: "24/7 AI Voice Agent", reason: "You are missing high-intent calls when crews are on the roof. Deploy an AI receptionist to answer, qualify, and book inspections instantly.", priority: 1 });
+            if (scores["Quote Velocity"] <= 2) recommendations.push({ activity: "Instant Satellite Estimating", reason: "Manual measurements kill deals. Integrate Aerial/Satellite map APIs with AI to fire preliminary quotes via SMS in minutes.", priority: 2 });
+            if (scores["Automated Follow-up"] <= 2) recommendations.push({ activity: "Relentless SMS Nurturing", reason: "Unsigned quotes are going cold. Build an automated SMS/Email agent to persistently follow up with homeowners until a yes or no.", priority: 3 });
+            if (scores["Back-Office Billing"] <= 3) recommendations.push({ activity: "AI Accounts Receivable Hound", reason: "Cash flow is trapped in unpaid progression invoices. Deploy an AI agent to automatically chase down checks from clients and insurance companies.", priority: 4 });
+            if (scores["Local SEO Dominance"] <= 2) recommendations.push({ activity: "Programmatic Local SEO", reason: "Competitors are outranking you in specific zip codes. Build an AI content engine to automatically generate specialized landing pages for every neighborhood you serve.", priority: 5 });
+            
+            return {
+                scores,
+                avgScore: avg.toFixed(1),
+                recommendations: recommendations.sort((a,b) => a.priority - b.priority)
+            };
         }
-        try {
-            const ctrl = new AbortController();
-            const timeout = setTimeout(() => ctrl.abort(), 6000);
-            const r = await fetch(`${API_URL}/health`, { signal: ctrl.signal });
-            clearTimeout(timeout);
-            if (!r.ok) throw new Error(`HTTP ${r.status}`);
-            const data = await r.json();
-            if (data.status !== 'ok') throw new Error('not ok');
-            console.log('[gapstone] API healthy:', API_URL);
-        } catch (e) {
-            console.warn('[gapstone] API unreachable at', API_URL, '—', e.message || e.name);
-            localStorage.removeItem('gapstone_api_url');
-            localStorage.removeItem('openclaw_api_url');
-            const stale = API_URL;
-            API_URL = '';  // prevent audit submit against dead URL
-            showTunnelBanner(
-                `⚠️ Tunnel unreachable: <code class="px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-200 text-xs">${stale}</code>. Append <code class="px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-200">?api=...</code> with the current URL, or click Set API URL.`
-            );
-        }
-    }
-    // Run immediately — don't block page render
-    verifyApiUrl();
 
-    // Tunnel banner interactions
-    document.addEventListener('DOMContentLoaded', () => {
-        const setBtn = document.getElementById('setTunnelBtn');
-        const dismissBtn = document.getElementById('dismissTunnelBtn');
-        if (setBtn) {
-            setBtn.addEventListener('click', () => {
-                const url = prompt('Enter your tunnel URL (e.g. https://yourname.serveo.net):', 'https://');
-                if (url && url.startsWith('http')) {
-                    localStorage.setItem('gapstone_api_url', url.replace(/\/$/, ''));
-                    localStorage.removeItem('openclaw_api_url');  // clear legacy
-                    window.location.reload();
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="loader"></div>';
+            hero.classList.add('opacity-50', 'pointer-events-none');
+            loading.classList.remove('hidden');
+
+            let step = 0;
+            const interval = setInterval(() => {
+                if(step < loadingSteps.length) {
+                    const el = document.createElement('div');
+                    el.textContent = loadingSteps[step];
+                    terminalText.appendChild(el);
+                    step++;
+                } else {
+                    clearInterval(interval);
+                    
+                    const data = simulateSwarmBackend();
+                    
+                    document.getElementById('avgScore').textContent = data.avgScore;
+                    
+                    const heatmap = document.getElementById('heatmapGrid');
+                    heatmap.innerHTML = '';
+                    for (const [key, val] of Object.entries(data.scores)) {
+                        let colorClass = val >= 4 ? 'text-green-500 bg-green-500/10 border-green-500/20' : 
+                                         val >= 3 ? 'text-orange-400 bg-orange-500/10 border-orange-500/20' : 
+                                         'text-red-500 bg-red-500/10 border-red-500/20';
+                        heatmap.innerHTML += `
+                            <div class="p-4 rounded-xl border ${colorClass} flex justify-between items-center transition-transform hover:scale-[1.02]">
+                                <span class="font-bold text-gray-200">${key}</span>
+                                <span class="text-2xl font-black">L${val}</span>
+                            </div>
+                        `;
+                    }
+
+                    const porters = document.getElementById('portersList');
+                    porters.innerHTML = '';
+                    data.recommendations.forEach((rec, idx) => {
+                        porters.innerHTML += `
+                            <div class="flex gap-5 items-start p-6 bg-white/5 rounded-xl border border-white/10 hover:border-orange-500/30 transition-colors">
+                                <div class="w-10 h-10 rounded-full bg-orange-600 flex items-center justify-center font-black text-white shrink-0 shadow-lg">${idx+1}</div>
+                                <div>
+                                    <h4 class="text-white font-bold text-xl">${rec.activity}</h4>
+                                    <p class="text-gray-400 mt-2 leading-relaxed">${rec.reason}</p>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    loading.classList.add('hidden');
+                    hero.classList.add('hidden');
+                    results.classList.remove('hidden');
                 }
-            });
-        }
-        if (dismissBtn) {
-            dismissBtn.addEventListener('click', () => {
-                const banner = document.getElementById('tunnelBanner');
-                if (banner) banner.classList.add('hidden');
-            });
-        }
-        // Download PDF button
-        const pdfBtn = document.getElementById('downloadPdfBtn');
-        if (pdfBtn) {
-            pdfBtn.addEventListener('click', () => window.print());
-        }
-    });
-
-    const AGENTS = [
-        { id: "researcher",              label: "Researcher",   emoji: "🔍" },
-        { id: "specialist.D1",           label: "Strategy",     emoji: "🎯" },
-        { id: "specialist.D2",           label: "Data",         emoji: "💾" },
-        { id: "specialist.D3",           label: "People",       emoji: "👥" },
-        { id: "specialist.D4",           label: "Governance",   emoji: "⚖️" },
-        { id: "specialist.D5",           label: "Use Cases",    emoji: "🚀" },
-        { id: "value_chain_strategist",  label: "Value Chain",  emoji: "🗺️" },
-        { id: "critic",                  label: "Critic",       emoji: "🔎" },
-        { id: "synthesizer",             label: "Synthesizer",  emoji: "✍️" },
-    ];
-
-    // Porter's Value Chain activity metadata
-    const ACTIVITY_META = {
-        // Primary activities
-        inbound:       { label: "Primary: Inbound Logistics",  group: "primary" },
-        operations:    { label: "Primary: Operations",          group: "primary" },
-        outbound:      { label: "Primary: Outbound Logistics", group: "primary" },
-        marketing:     { label: "Primary: Marketing & Sales",   group: "primary" },
-        service:       { label: "Primary: Service",             group: "primary" },
-        // Support activities
-        infrastructure:{ label: "Support: Infrastructure",      group: "support" },
-        hr:            { label: "Support: Human Resources",     group: "support" },
-        "tech-dev":    { label: "Support: Tech Development",    group: "support" },
-        procurement:   { label: "Support: Procurement",         group: "support" },
-    };
-
-    function priorityStyle(priority) {
-        // 1=emerald, 2=sky, 3=amber
-        if (priority === 1) return {
-            badge: "bg-emerald-400/20 text-emerald-300 border-emerald-500/30",
-            printClass: "priority-1-print",
-            label: "Priority 1"
-        };
-        if (priority === 2) return {
-            badge: "bg-sky-400/20 text-sky-300 border-sky-500/30",
-            printClass: "priority-2-print",
-            label: "Priority 2"
-        };
-        return {
-            badge: "bg-amber-400/20 text-amber-300 border-amber-500/30",
-            printClass: "priority-3-print",
-            label: `Priority ${priority}`
-        };
-    }
-
-    const form = document.getElementById('auditForm');
-    const hero = document.getElementById('hero');
-    const timelineWrap = document.getElementById('timelineWrap');
-    const agentCardsEl = document.getElementById('agentCards');
-    const terminal = document.getElementById('terminal');
-    const results = document.getElementById('results');
-    const submitBtn = document.getElementById('submitBtn');
-    const phaseLabel = document.getElementById('phaseLabel');
-    const liveCost = document.getElementById('liveCost');
-
-    const READINESS_LABELS = {
-        1: "Level 1 · Ad-hoc",
-        2: "Level 2 · Experimental",
-        3: "Level 3 · Operational",
-        4: "Level 4 · Transformational",
-    };
-
-    function renderAgentCards() {
-        agentCardsEl.innerHTML = AGENTS.map(a => `
-            <div id="card-${a.id.replace('.', '-')}" class="glass-panel rounded-lg p-3 text-center opacity-40">
-                <div class="text-2xl">${a.emoji}</div>
-                <div class="text-xs mt-1 text-gray-300">${a.label}</div>
-                <div class="text-[10px] text-gray-500 mt-1 agent-status">idle</div>
-            </div>
-        `).join('');
-    }
-
-    function setAgentStatus(agentId, status, color) {
-        const card = document.getElementById(`card-${agentId.replace('.', '-')}`);
-        if (!card) return;
-        card.classList.remove('opacity-40');
-        const statusEl = card.querySelector('.agent-status');
-        statusEl.textContent = status;
-        card.style.borderColor = color || 'rgba(74, 222, 128, 0.4)';
-        if (status === 'running') card.classList.add('agent-pulse');
-        else card.classList.remove('agent-pulse');
-    }
-
-    function termLine(text, color = 'text-gray-400') {
-        const el = document.createElement('div');
-        el.className = `terminal-line fade-in ${color}`;
-        el.textContent = text;
-        terminal.appendChild(el);
-        terminal.scrollTop = terminal.scrollHeight;
-    }
-
-    function scoreColor(score) {
-        if (score >= 3.5) return 'bg-emerald-400/20 text-emerald-300 border-emerald-500/30';
-        if (score >= 2.5) return 'bg-sky-400/20 text-sky-300 border-sky-500/30';
-        if (score >= 1.75) return 'bg-amber-400/20 text-amber-300 border-amber-500/30';
-        return 'bg-rose-400/20 text-rose-300 border-rose-500/30';
-    }
-
-    let totalCost = 0;
-    // Session state for the self-assessment flow
-    let currentSessionId = null;
-    let scrapedAnswers = {};      // { Q4: { level, confidence, discovery_needed, stem, ... }, ... } — captured for future delta UX, no longer used for pre-fill
-    let currentScreener = {};     // industry, priority_function, etc — remembered for quiz header context
-    let questionsData = null;     // loaded lazily from /questions.json when user enters quiz
-    let pipelineComplete = false;
-    let agentsDone = new Set();
-    const TOTAL_AGENTS = 11;
-    let sessionIdResolver = null; // resolves once pipeline.start arrives with session_id
-    let sessionIdPromise = null;
-
-    function handleEvent(ev) {
-        const { type, agent, data } = ev;
-
-        if (type === 'pipeline.start') {
-            phaseLabel.textContent = `Auditing ${data.company_name}...`;
-            if (data.session_id) {
-                currentSessionId = data.session_id;
-                console.log('[gapstone] session_id:', currentSessionId);
-                if (sessionIdResolver) { sessionIdResolver(data.session_id); sessionIdResolver = null; }
-            }
-            termLine(`> orchestrator: starting audit for ${data.company_name} (${data.url})`, 'text-emerald-400');
-        }
-        else if (type === 'pipeline.phase') {
-            phaseLabel.textContent = `Phase: ${data.phase}${data.count ? ' × ' + data.count : ''}`;
-            termLine(`> phase: ${data.phase}`, 'text-emerald-400');
-        }
-        else if (type === 'agent.start') {
-            setAgentStatus(agent, 'running', 'rgba(250, 204, 21, 0.6)');
-            termLine(`> ${agent}: started`, 'text-yellow-300');
-        }
-        else if (type === 'agent.tool_use') {
-            termLine(`  ${agent} → ${data.tool}(${JSON.stringify(data.input).slice(0, 80)})`, 'text-cyan-300');
-        }
-        else if (type === 'agent.thought') {
-            if (data.text) termLine(`  ${agent}: ${data.text}`, 'text-gray-400');
-        }
-        else if (type === 'agent.done') {
-            setAgentStatus(agent, 'done', 'rgba(74, 222, 128, 0.5)');
-            if (data.cost_usd) {
-                totalCost += data.cost_usd;
-                liveCost.textContent = `cost: $${totalCost.toFixed(3)}`;
-            }
-            if (agent) { agentsDone.add(agent); updateAgentStatusBanner(); }
-            termLine(`  ${agent}: done ($${(data.cost_usd || 0).toFixed(3)})`, 'text-emerald-400');
-        }
-        else if (type === 'agent.error') {
-            setAgentStatus(agent, 'error', 'rgba(244, 63, 94, 0.6)');
-            termLine(`! ${agent}: ${data.error}`, 'text-rose-400');
-        }
-        else if (type === 'evidence') {
-            document.getElementById('evidenceJson').textContent = JSON.stringify(data, null, 2);
-        }
-        else if (type === 'critic.challenge') {
-            termLine(`  critic ⚡ ${data.text}`, 'text-fuchsia-300');
-        }
-        else if (type === 'scorecard') {
-            renderScorecard(data);
-        }
-        else if (type === 'narrative') {
-            renderNarrative(data);
-        }
-        else if (type === 'value_chain') {
-            renderValueChain(data.plays || []);
-        }
-        else if (type === 'specialist.result') {
-            // Cache specialist's per-question predictions (with confidence) for the quiz pre-fill
-            const ans = data && data.answers ? data.answers : {};
-            for (const qid of Object.keys(ans)) {
-                scrapedAnswers[qid] = { ...(scrapedAnswers[qid] || {}), ...ans[qid] };
-            }
-        }
-        else if (type === 'pipeline.complete') {
-            termLine(`> complete — overall readiness ${data.overall_score}/4.0`, 'text-emerald-400');
-            if (data.session_id) currentSessionId = data.session_id;
-            pipelineComplete = true;
-            updateAgentStatusBanner();
-            updateQuizProgress();
-            // Reveal the preliminary scorecard + swarm output below the quiz.
-            // Hide the legacy "Continue to Self-Assessment" CTA — quiz is already open.
-            const ctaPanel = document.getElementById('continueToQuizPanel');
-            if (ctaPanel) ctaPanel.classList.add('hidden');
-            results.classList.remove('hidden');
-        }
-        else if (type === 'pipeline.error') {
-            termLine(`! pipeline failed: ${data.error}`, 'text-rose-400');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = 'Try Again';
-        }
-    }
-
-    function renderScorecard(s) {
-        document.getElementById('overallScore').textContent = s.overall_score.toFixed(1);
-        document.getElementById('readinessLabel').textContent = READINESS_LABELS[Math.round(s.overall_score)] || '';
-
-        const DIM_NAMES = {
-            D1: "Strategy & Leadership", D2: "Data & Infrastructure",
-            D3: "People & Skills",       D4: "Governance & Risk",
-            D5: "Use Cases & Adoption",
-        };
-        const body = document.getElementById('heatmapBody');
-        body.innerHTML = '';
-        for (const [dim, score] of Object.entries(s.dimension_scores)) {
-            const currentLvl = Math.round(score);
-            const row = document.createElement('tr');
-            row.className = 'border-t border-gray-800';
-            row.innerHTML = `<td class="p-2 text-gray-300">${dim} · ${DIM_NAMES[dim]}</td>` +
-                [1,2,3,4].map(L => `
-                    <td class="p-2 text-center">
-                        <div class="heatmap-cell mx-auto w-12 h-8 rounded border ${L === currentLvl ? scoreColor(score) : 'border-gray-800 text-gray-700'} flex items-center justify-center font-semibold">
-                            ${L === currentLvl ? 'L'+L : ''}
-                        </div>
-                    </td>
-                `).join('') +
-                `<td class="p-2 text-right font-bold text-white">${score.toFixed(1)}</td>`;
-            body.appendChild(row);
-        }
-
-        const gapsList = document.getElementById('gapsList');
-        gapsList.innerHTML = s.top_gaps.map((g, i) => `
-            <div class="flex gap-3 items-start p-4 bg-white/5 rounded-lg border border-white/10">
-                <div class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center font-bold text-white shrink-0">${i+1}</div>
-                <div class="flex-1">
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <h4 class="text-white font-semibold">${g.stem}</h4>
-                        <span class="text-[10px] px-2 py-0.5 bg-gray-800 rounded text-gray-400">${g.dimension}</span>
-                        ${g.discovery_needed ? '<span class="text-[10px] px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded border border-amber-500/30">discovery needed</span>' : ''}
-                    </div>
-                    <div class="text-gray-400 mt-1 text-sm">Current L${g.current} → Target L${g.target} (gap +${g.gap})</div>
-                    ${g.evidence && g.evidence.length ? `
-                        <details class="mt-2 text-xs text-gray-500">
-                            <summary class="cursor-pointer hover:text-gray-300">${g.evidence.length} evidence citation${g.evidence.length>1?'s':''}</summary>
-                            <ul class="mt-2 space-y-1">${g.evidence.map(e => `<li>· ${e}</li>`).join('')}</ul>
-                        </details>
-                    ` : ''}
-                </div>
-            </div>
-        `).join('');
-    }
-
-    function renderNarrative(n) {
-        document.getElementById('execSummary').textContent = n.exec_summary || '';
-        const roadmap = document.getElementById('roadmap');
-        roadmap.innerHTML = '';
-        [['30 days','30_days','text-emerald-300'],['60 days','60_days','text-sky-300'],['90 days','90_days','text-fuchsia-300']].forEach(([label, key, color]) => {
-            const items = (n.roadmap_90_day && n.roadmap_90_day[key]) || [];
-            roadmap.innerHTML += `
-                <div class="bg-white/5 rounded-lg p-5 border border-white/10">
-                    <div class="text-xs uppercase tracking-widest ${color} mb-3">${label}</div>
-                    <ul class="space-y-2 text-sm text-gray-300">
-                        ${items.map(i => `<li>· ${i}</li>`).join('')}
-                    </ul>
-                </div>
-            `;
+            }, 800);
         });
-    }
-
-    function renderValueChain(plays) {
-        const container = document.getElementById('valueChainPlays');
-        if (!plays || !plays.length) {
-            container.innerHTML = '<div class="text-sm text-gray-500 italic">No value chain plays returned.</div>';
-            return;
-        }
-        // Sort by priority ascending
-        const sorted = [...plays].sort((a, b) => (a.priority || 99) - (b.priority || 99));
-        container.innerHTML = sorted.map(play => {
-            const pstyle = priorityStyle(play.priority);
-            const activityLabel = play.activity_label || (ACTIVITY_META[play.activity] && ACTIVITY_META[play.activity].label) || play.activity || 'Activity';
-            return `
-                <div class="play-card relative p-5 bg-white/5 rounded-lg border border-white/10 fade-in">
-                    <div class="flex items-start justify-between gap-3 mb-3">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <span class="text-[10px] uppercase tracking-wider px-2 py-1 rounded border ${pstyle.badge} ${pstyle.printClass} font-semibold">
-                                ${pstyle.label}
-                            </span>
-                            ${play.addresses_gap ? `<span class="text-[10px] px-2 py-1 bg-gray-800 rounded text-gray-400 border border-gray-700">Addresses ${play.addresses_gap}</span>` : ''}
-                        </div>
-                        <span class="text-[10px] uppercase tracking-wider px-2 py-1 rounded bg-white/5 text-gray-400 border border-white/10 shrink-0">
-                            ${activityLabel}
-                        </span>
-                    </div>
-                    <h4 class="text-white font-semibold text-base mb-2">${play.title || 'Untitled play'}</h4>
-                    <p class="text-sm text-gray-300 leading-relaxed">${play.description || ''}</p>
-                    ${play.expected_impact ? `
-                        <div class="mt-3 pt-3 border-t border-white/10">
-                            <p class="text-xs italic text-gray-400"><span class="uppercase tracking-wider text-[10px] text-gray-500 not-italic">Expected impact · </span>${play.expected_impact}</p>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-        }).join('');
-    }
-
-    async function streamAudit(payload) {
-        const res = await fetch(`${API_URL}/api/audit-stream`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-        });
-        if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
-
-        const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
-        let buffer = '';
-        while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            // Normalize CRLF → LF (sse-starlette emits \r\n\r\n per SSE spec)
-            buffer += value.replace(/\r\n/g, '\n');
-            let idx;
-            while ((idx = buffer.indexOf('\n\n')) !== -1) {
-                const frame = buffer.slice(0, idx);
-                buffer = buffer.slice(idx + 2);
-                const dataLines = frame.split('\n').filter(l => l.startsWith('data: '));
-                if (!dataLines.length) continue;
-                const payload = dataLines.map(l => l.slice(6)).join('\n');
-                try {
-                    const outer = JSON.parse(payload);
-                    // sse-starlette wraps payload as plain json string (already parsed)
-                    handleEvent(outer);
-                } catch (e) {
-                    console.warn('parse fail', e, payload.slice(0, 100));
-                }
-            }
-        }
-    }
-
-    // Normalize any user-entered URL format into a canonical https://host/... URL.
-    // Accepts: "acme.com", "www.acme.com", "http://acme.com", "https://acme.com/path", "acme.com/ ", etc.
-    // Returns null if the input can't be parsed as a host.
-    function normalizeUrl(input) {
-        let s = (input || '').trim();
-        if (!s) return null;
-        // Strip leading @ or // some folks paste (Slack/Notion weirdness)
-        s = s.replace(/^@/, '').replace(/^\/\//, '');
-        // Add protocol if missing
-        if (!/^https?:\/\//i.test(s)) s = 'https://' + s;
-        try {
-            const u = new URL(s);
-            if (!u.hostname || !u.hostname.includes('.')) return null;
-            // Remove trailing slash for cleanliness
-            return u.href.replace(/\/$/, '');
-        } catch (_) {
-            return null;
-        }
-    }
-
-    // Derive a friendly company name from a normalized URL.
-    // e.g. https://www.acme-corp.co.uk/about → "Acme-corp"
-    function deriveCompanyName(normalizedUrl) {
-        try {
-            const host = new URL(normalizedUrl).hostname.replace(/^www\./i, '');
-            const label = host.split('.')[0] || 'Company';
-            return label.charAt(0).toUpperCase() + label.slice(1);
-        } catch (_) {
-            return 'Company';
-        }
-    }
-
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (!API_URL) {
-            alert('Backend URL is not configured or unreachable.\n\nAppend ?api=<tunnel-url> to this page URL, or click "Set API URL" in the amber banner at the top.');
-            return;
-        }
-        const rawUrl = document.getElementById('companyUrl').value;
-        const url = normalizeUrl(rawUrl);
-        if (!url) {
-            timelineWrap.classList.remove('hidden');
-            terminal.innerHTML = '';
-            termLine(`! Invalid URL: "${rawUrl}". Try "acme.com" or "https://acme.com".`, 'text-rose-400');
-            return;
-        }
-        const industry = document.getElementById('industry').value || 'unknown';
-        const size = document.getElementById('size').value;
-        const priorityFunction = document.getElementById('priorityFunction').value || 'unknown';
-
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<div class="loader"></div>';
-        hero.classList.add('opacity-40', 'pointer-events-none');
-        timelineWrap.classList.remove('hidden');
-        renderAgentCards();
-        terminal.innerHTML = '';
-        totalCost = 0;
-        liveCost.textContent = '';
-
-        // Reset quiz-gating state for a fresh run
-        currentScreener = { industry, size, role: 'COO / Operations lead', priority_function: priorityFunction };
-        scrapedAnswers = {};
-        pipelineComplete = false;
-        agentsDone = new Set();
-        sessionIdPromise = new Promise(resolve => { sessionIdResolver = resolve; });
-
-        // Fire-and-forget the audit stream; we'll jump to the quiz as soon as we have a session_id.
-        streamAudit({
-            companyUrl: url,
-            companyName: deriveCompanyName(url),
-            industry, size, role: 'COO / Operations lead',
-            priority_function: priorityFunction,
-        }).catch(err => {
-            termLine(`! fatal: ${err.message}`, 'text-rose-400');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = 'Try Again';
-        });
-
-        try {
-            await sessionIdPromise;
-            await showQuizView();
-        } catch (err) {
-            termLine(`! quiz-open failed: ${err.message}`, 'text-rose-400');
-        }
-    });
-
-    // =========================================================================
-    // SELF-ASSESSMENT / QUIZ VIEW
-    // =========================================================================
-    const DIM_NAMES = {
-        D1: "Strategy & Leadership", D2: "Data & Infrastructure",
-        D3: "People & Skills",       D4: "Governance & Risk",
-        D5: "Use Cases & Adoption",
-    };
-    const DIM_EMOJIS = { D1: '🎯', D2: '💾', D3: '👥', D4: '⚖️', D5: '🚀' };
-
-    async function loadQuestions() {
-        if (questionsData) return questionsData;
-        const r = await fetch('/questions.json');
-        if (!r.ok) throw new Error(`questions.json load failed: ${r.status}`);
-        questionsData = await r.json();
-        return questionsData;
-    }
-
-    async function showQuizView() {
-        if (!currentSessionId) {
-            alert('No session found. Re-run the audit to continue.');
-            return;
-        }
-        await loadQuestions();
-
-        // Reveal the quiz — keep the agent timeline visible above so the swarm is still on screen.
-        // Move the quiz above the results panel in DOM so that when pipeline.complete reveals
-        // the preliminary scorecard, it lands *below* the quiz rather than shoving it down.
-        const quizView = document.getElementById('quizView');
-        const resultsPanel = document.getElementById('results');
-        if (quizView && resultsPanel && resultsPanel.parentNode === quizView.parentNode) {
-            const quizAfterResults = !!(resultsPanel.compareDocumentPosition(quizView) & Node.DOCUMENT_POSITION_FOLLOWING);
-            if (quizAfterResults) resultsPanel.parentNode.insertBefore(quizView, resultsPanel);
-        }
-        quizView.classList.remove('hidden');
-        quizView.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-        // Pre-fill painful_workflow from priority_function
-        const pw = document.getElementById('painfulWorkflow');
-        if (currentScreener.priority_function && currentScreener.priority_function !== 'unknown' && !pw.value) {
-            pw.value = currentScreener.priority_function;
-        }
-
-        renderQuiz();
-        updateAgentStatusBanner();
-    }
-
-    function renderQuiz() {
-        const container = document.getElementById('quizQuestions');
-        container.innerHTML = '';
-        const byDim = {};
-        for (const q of questionsData.scored) {
-            (byDim[q.dimension] = byDim[q.dimension] || []).push(q);
-        }
-        for (const dim of ['D1','D2','D3','D4','D5']) {
-            const qs = byDim[dim] || [];
-            const dimCard = document.createElement('div');
-            dimCard.className = 'glass-panel p-6 rounded-2xl fade-in';
-            dimCard.innerHTML = `
-                <div class="flex items-center gap-3 mb-4 pb-3 border-b border-gray-800">
-                    <span class="text-2xl">${DIM_EMOJIS[dim]}</span>
-                    <div>
-                        <h3 class="text-lg font-semibold">${dim} · ${DIM_NAMES[dim]}</h3>
-                        <p class="text-xs text-gray-500">${qs.length} questions</p>
-                    </div>
-                </div>
-                <div class="space-y-6 quiz-dim-questions" data-dim="${dim}"></div>
-            `;
-            container.appendChild(dimCard);
-            const inner = dimCard.querySelector('.quiz-dim-questions');
-            for (const q of qs) inner.appendChild(renderQuestion(q));
-        }
-        updateQuizProgress();
-    }
-
-    function renderQuestion(q) {
-        const mainOptions = q.options.filter(o => !o.flag);
-        const wrap = document.createElement('div');
-        wrap.innerHTML = `
-            <div class="flex items-start gap-3">
-                <span class="text-xs text-gray-500 font-mono pt-0.5 shrink-0">${q.id}</span>
-                <div class="flex-1 min-w-0">
-                    <div class="flex flex-wrap items-center gap-2 mb-2">
-                        <p class="font-medium text-white">${q.stem.replace(/\{\{[^}]+\}\}/g, (m) => {
-                            const key = m.slice(2,-2);
-                            return currentScreener[key] || m;
-                        })}</p>
-                    </div>
-                    <div class="space-y-1 quiz-options" data-qid="${q.id}">
-                        ${mainOptions.map(opt => `
-                            <label class="flex items-start gap-3 p-2 rounded hover:bg-white/5 cursor-pointer transition-colors">
-                                <input type="radio" name="${q.id}" value="${opt.level}" class="mt-1 accent-emerald-400" />
-                                <span class="text-sm flex-1"><span class="text-gray-500 font-mono mr-2">L${opt.level}</span><span class="text-gray-300">${opt.text}</span></span>
-                            </label>
-                        `).join('')}
-                        <label class="flex items-start gap-3 p-2 rounded hover:bg-white/5 cursor-pointer transition-colors">
-                            <input type="radio" name="${q.id}" value="0" class="mt-1 accent-amber-400" />
-                            <span class="text-sm text-gray-400 italic flex-1">Don't know / Not sure</span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-        `;
-        wrap.querySelectorAll('input[type=radio]').forEach(r => {
-            r.addEventListener('change', updateQuizProgress);
-        });
-        return wrap;
-    }
-
-    function updateQuizProgress() {
-        const total = (questionsData && questionsData.scored ? questionsData.scored.length : 20);
-        const answered = document.querySelectorAll('#quizQuestions input[type=radio]:checked').length;
-        const progressEl = document.getElementById('quizProgressText');
-        const barEl = document.getElementById('quizProgressBar');
-        const btn = document.getElementById('quizSubmitBtn');
-        const hint = document.getElementById('quizSubmitHint');
-        if (progressEl) progressEl.textContent = `${answered} / ${total} answered`;
-        if (barEl) barEl.style.width = `${(answered / total) * 100}%`;
-        if (!btn || !hint) return;
-        if (answered < total) {
-            btn.disabled = true;
-            hint.textContent = `Answer all ${total} questions to enable submit. ${total - answered} remaining.`;
-        } else if (!pipelineComplete) {
-            btn.disabled = true;
-            hint.textContent = `All answered! Waiting for agents to finish scraping (${agentsDone.size}/${TOTAL_AGENTS})…`;
-        } else {
-            btn.disabled = false;
-            hint.textContent = 'All answered. Generate your combined report.';
-        }
-    }
-
-    function updateAgentStatusBanner() {
-        const label = document.getElementById('quizAgentStatus');
-        const dot = document.getElementById('quizAgentStatusDot');
-        if (!label) return;
-        if (pipelineComplete) {
-            label.textContent = `Agents done (${agentsDone.size}/${TOTAL_AGENTS}). Submit whenever you're ready.`;
-            if (dot) { dot.classList.remove('bg-yellow-400', 'animate-pulse'); dot.classList.add('bg-emerald-400'); }
-        } else {
-            label.textContent = `Agents scraping your public footprint… ${agentsDone.size}/${TOTAL_AGENTS} done`;
-            if (dot) { dot.classList.add('bg-yellow-400', 'animate-pulse'); dot.classList.remove('bg-emerald-400'); }
-        }
-    }
-
-    async function submitQuiz() {
-        const btn = document.getElementById('quizSubmitBtn');
-        if (btn.disabled || !currentSessionId) return;
-        const answers = {};
-        document.querySelectorAll('#quizQuestions input[type=radio]:checked').forEach(r => {
-            answers[r.name] = parseInt(r.value, 10);
-        });
-        const painfulWorkflow = document.getElementById('painfulWorkflow').value.trim();
-
-        btn.disabled = true;
-        btn.innerHTML = '<div class="loader"></div><span>Saving...</span>';
-        try {
-            // 1) Save quiz answers
-            const r = await fetch(`${API_URL}/api/quiz/${currentSessionId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ answers, contextual: { painful_workflow: painfulWorkflow } }),
-            });
-            const out = await r.json();
-            if (out.error) throw new Error(out.error);
-
-            // 2) Swap quiz view for a "combining" status panel
-            const quizView = document.getElementById('quizView');
-            quizView.innerHTML = `
-                <div class="glass-panel p-10 rounded-2xl text-center space-y-4">
-                    <div class="inline-flex items-center gap-3">
-                        <div class="loader"></div>
-                        <h2 id="combiningLabel" class="text-2xl font-semibold">Fusing agents + self-assessment…</h2>
-                    </div>
-                    <p class="text-gray-400 text-sm">The combiner is merging your 20 answers with the scraped evidence and re-scoring. Synthesizer and Value Chain strategist are re-running on the combined scorecard.</p>
-                    <div id="combiningTerminal" class="bg-black/40 rounded-lg p-4 font-mono text-xs text-left max-h-48 overflow-y-auto"></div>
-                </div>
-            `;
-
-            // 3) Stream the combined report events
-            await streamCombinedReport();
-        } catch (err) {
-            btn.disabled = false;
-            btn.innerHTML = '<span>Generate Combined Report</span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>';
-            alert('Submit failed: ' + err.message);
-        }
-    }
-
-    function combiningLine(text, color = 'text-emerald-300') {
-        const term = document.getElementById('combiningTerminal');
-        if (!term) return;
-        const el = document.createElement('div');
-        el.className = `${color} fade-in`;
-        el.textContent = text;
-        term.appendChild(el);
-        term.scrollTop = term.scrollHeight;
-    }
-
-    async function streamCombinedReport() {
-        const res = await fetch(`${API_URL}/api/combined-report/${currentSessionId}/stream`, { method: 'POST' });
-        if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
-        const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
-        let buffer = '';
-        while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            buffer += value.replace(/\r\n/g, '\n');
-            let idx;
-            while ((idx = buffer.indexOf('\n\n')) !== -1) {
-                const frame = buffer.slice(0, idx);
-                buffer = buffer.slice(idx + 2);
-                const dataLines = frame.split('\n').filter(l => l.startsWith('data: '));
-                if (!dataLines.length) continue;
-                try {
-                    handleCombinedEvent(JSON.parse(dataLines.map(l => l.slice(6)).join('\n')));
-                } catch (e) { console.warn('combined parse fail', e); }
-            }
-        }
-    }
-
-    function handleCombinedEvent(ev) {
-        const { type, agent, data } = ev;
-        const label = document.getElementById('combiningLabel');
-
-        if (type === 'combined.start') {
-            combiningLine('> combiner started', 'text-emerald-400');
-        } else if (type === 'combined.phase') {
-            if (label) label.textContent = `Phase: ${data.phase}`;
-            combiningLine(`> phase: ${data.phase}`, 'text-emerald-400');
-        } else if (type === 'combined.merged') {
-            combiningLine(`  merged: ${data.user_confirmed}/${data.total_questions} user-confirmed · ${data.agreed_with_agent} agreed with agents · ${data.discovery_needed} flagged for discovery`, 'text-cyan-300');
-        } else if (type === 'agent.start' || type === 'agent.done') {
-            combiningLine(`  ${agent}: ${type.replace('agent.','')}${data && data.cost_usd ? ' ($' + data.cost_usd.toFixed(3) + ')' : ''}`, 'text-gray-400');
-        } else if (type === 'agent.thought') {
-            if (data && data.text) combiningLine(`  ${agent}: ${data.text}`, 'text-gray-500');
-        } else if (type === 'scorecard') {
-            // Reveal the final report UI using the existing render functions
-            showCombinedReport();
-            renderScorecard(data);
-        } else if (type === 'narrative') {
-            renderNarrative(data);
-        } else if (type === 'value_chain') {
-            renderValueChain(data.plays || []);
-        } else if (type === 'vendor_recs') {
-            renderVendorRecs(data);
-        } else if (type === 'regulatory_scan') {
-            renderRegulatoryScan(data);
-        } else if (type === 'combined.complete') {
-            combiningLine(`> complete — combined readiness ${data.overall_score}/4.0`, 'text-emerald-400');
-            // Hide the combining panel, scroll to results
-            const quizView = document.getElementById('quizView');
-            if (quizView) quizView.classList.add('hidden');
-            document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        } else if (type === 'combined.error') {
-            combiningLine(`! error: ${data.error}`, 'text-rose-400');
-        }
-    }
-
-    function renderVendorRecs(data) {
-        const section = document.getElementById('vendorRecsSection');
-        const list = document.getElementById('vendorRecsList');
-        const shortlists = (data && data.shortlists) || [];
-        if (!shortlists.length) { section.classList.add('hidden'); return; }
-        section.classList.remove('hidden');
-        list.innerHTML = shortlists.map(sl => {
-            const vendors = (sl.vendors || []).map(v => `
-                <div class="p-4 bg-white/5 rounded-lg border border-white/10 space-y-2 min-w-0">
-                    <div class="space-y-0.5 min-w-0">
-                        <a href="${v.website}" target="_blank" rel="noopener" class="font-semibold text-white hover:underline break-words">${v.name}</a>
-                        <p class="text-xs text-gray-500">${v.positioning || ''}</p>
-                    </div>
-                    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-xs">
-                        <span class="text-emerald-300 font-mono break-words">${v.price_band || '—'}</span>
-                        ${v.setup_complexity ? `<span class="text-gray-500">· ${v.setup_complexity}</span>` : ''}
-                    </div>
-                    <p class="text-sm text-gray-300">${v.why_fit || ''}</p>
-                    ${v.watchouts ? `<p class="text-xs text-amber-300/80">⚠ ${v.watchouts}</p>` : ''}
-                </div>
-            `).join('');
-            return `
-                <div class="space-y-3">
-                    <div class="flex items-center gap-2">
-                        <span class="text-[10px] px-2 py-0.5 bg-gray-800 rounded text-gray-400 font-mono">${sl.gap_qid}</span>
-                        <h4 class="text-base font-semibold text-white">${sl.gap_label}</h4>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">${vendors}</div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    function renderRegulatoryScan(data) {
-        const section = document.getElementById('regulatoryScanSection');
-        const regs = (data && data.applicable_regulations) || [];
-        const flags = (data && data.discovery_flags) || [];
-        if (!regs.length && !flags.length) { section.classList.add('hidden'); return; }
-        section.classList.remove('hidden');
-
-        const regList = document.getElementById('regulatoryList');
-        regList.innerHTML = regs.map(r => `
-            <div class="p-4 bg-white/5 rounded-lg border border-white/10 space-y-2">
-                <div class="flex flex-wrap items-baseline gap-2">
-                    ${r.source_url ? `<a href="${r.source_url}" target="_blank" rel="noopener" class="font-semibold text-white hover:underline">${r.name}</a>` : `<span class="font-semibold text-white">${r.name}</span>`}
-                    <span class="text-[10px] px-2 py-0.5 bg-gray-800 rounded text-gray-400">${r.jurisdiction || 'unknown jurisdiction'}</span>
-                </div>
-                <p class="text-sm text-gray-400"><span class="text-gray-500">Covers:</span> ${r.what_it_covers || ''}</p>
-                <p class="text-sm text-gray-300"><span class="text-emerald-300">AI implication:</span> ${r.ai_implication || ''}</p>
-            </div>
-        `).join('');
-
-        const flagsList = document.getElementById('regulatoryFlags');
-        flagsList.innerHTML = flags.map(f => `<li>· ${f}</li>`).join('');
-    }
-
-    function showCombinedReport() {
-        // Hide the audit-phase CTA panel (the "Continue to Self-Assessment" one is no longer needed)
-        const ctaPanel = document.getElementById('continueToQuizPanel');
-        if (ctaPanel) ctaPanel.classList.add('hidden');
-        // Swap the results headline + subtitle
-        const h2 = document.querySelector('#results .text-center h2');
-        const sub = document.getElementById('resultsSubtitle');
-        if (h2) h2.textContent = 'Combined Report';
-        if (sub) sub.textContent = 'Agents + your self-assessment fused. Every answer is user-confirmed or flagged for discovery.';
-        document.getElementById('results').classList.remove('hidden');
-    }
-
-    // Wire quiz buttons
-    document.addEventListener('DOMContentLoaded', () => {
-        const continueBtn = document.getElementById('continueToQuizBtn');
-        if (continueBtn) continueBtn.addEventListener('click', showQuizView);
-        const submitQuizBtn = document.getElementById('quizSubmitBtn');
-        if (submitQuizBtn) submitQuizBtn.addEventListener('click', submitQuiz);
-    });
     </script>
 </body>
 </html>
