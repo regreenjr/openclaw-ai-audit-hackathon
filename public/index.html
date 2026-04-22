@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roofing Sales AI Audit</title>
+    <title>Roofing Sales AI Swarm Audit</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #050505; color: #ededed; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
@@ -15,6 +15,7 @@
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-6">
 
+    <!-- HERO SECTION -->
     <div id="hero" class="w-full max-w-4xl text-center space-y-8 transition-opacity duration-500">
         <div class="inline-block px-4 py-1.5 rounded-full border border-orange-900/50 bg-orange-950/30 text-xs font-bold tracking-wide text-orange-500 uppercase mb-2 shadow-[0_0_15px_rgba(249,115,22,0.2)]">
             Active Neural Footprint Audit
@@ -33,19 +34,24 @@
                 </select>
             </div>
             <button type="submit" id="submitBtn" class="w-full bg-orange-600 text-white font-bold text-xl px-8 py-4 rounded-lg hover:bg-orange-500 transition-colors flex items-center justify-center gap-3 shadow-lg shadow-orange-600/20 mt-2">
-                <span>Run Live Serverless Audit</span>
+                <span>Run Live Distributed Swarm Audit</span>
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
             </button>
         </form>
     </div>
 
+    <!-- TERMINAL LOADING STATE -->
     <div id="loading" class="hidden w-full max-w-2xl mt-12 glass-panel rounded-xl p-6 font-mono text-sm text-orange-400 transition-opacity">
         <div class="flex items-center gap-3 mb-4 border-b border-gray-800 pb-4">
             <div class="loader"></div>
-            <span id="agentStatus" class="text-white text-lg font-semibold">Allocating compute...</span>
+            <span id="agentStatus" class="text-white text-lg font-semibold">Allocating distributed compute...</span>
         </div>
-        <div id="terminalText" class="space-y-2 opacity-80 h-48 overflow-y-auto w-full"></div>
+        <div id="terminalText" class="space-y-2 opacity-80 h-48 overflow-y-auto w-full">
+            <div>> Connecting to target URL...</div>
+        </div>
     </div>
 
+    <!-- RESULTS DASHBOARD -->
     <div id="results" class="hidden w-full max-w-6xl mt-12 space-y-8 animate-fade-in pb-20">
         <div class="text-center mb-10">
             <h2 class="text-4xl font-bold text-white">Live Audit Complete.</h2>
@@ -53,6 +59,7 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- BLEED CARD -->
             <div class="glass-panel p-8 rounded-2xl flex flex-col items-center justify-center text-center relative overflow-hidden md:col-span-1 border-red-900/50">
                 <div class="absolute inset-0 bg-red-900/10"></div>
                 <div class="text-xs text-red-500 font-bold uppercase tracking-widest mb-2 relative z-10 w-full">Est. Monthly Revenue Bleed</div>
@@ -60,15 +67,27 @@
                 <div class="text-gray-400 mt-2 font-medium relative z-10 text-sm">Lost to Speed-to-Lead & Agency Waste</div>
             </div>
 
+            <!-- HEATMAP -->
             <div class="glass-panel p-8 rounded-2xl md:col-span-2">
                 <h3 class="text-xl font-bold text-white mb-6 border-b border-gray-800 pb-4 uppercase tracking-wide">Infrastructure Matrix</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="heatmapGrid"></div>
             </div>
         </div>
 
+        <!-- RECOMMENDATIONS -->
         <div class="glass-panel p-8 rounded-2xl">
             <h3 class="text-xl font-bold text-white mb-6 border-b border-gray-800 pb-4 uppercase tracking-wide">The Autonomous AI Recovery Blueprint</h3>
             <div class="space-y-4" id="portersList"></div>
+        </div>
+
+        <!-- CTA -->
+        <div class="mt-12 text-center glass-panel p-12 rounded-2xl border border-orange-500/20 bg-gradient-to-b from-orange-900/10 to-transparent relative overflow-hidden">
+            <div class="absolute inset-0 bg-orange-500/5 blur-3xl rounded-full transform -translate-y-1/2"></div>
+            <h2 class="text-3xl lg:text-4xl font-black text-white mb-4 relative z-10">Stop the Bleeding.</h2>
+            <p class="text-gray-400 mb-8 max-w-2xl mx-auto text-lg relative z-10">You are heavily overpaying for LSA/Google leads and losing them in the gap between lead and contract. Book a rapid infrastructure call to plug these leaks with an automated AI sales machine.</p>
+            <a href="https://calendly.com" target="_blank" class="inline-block bg-orange-600 text-white font-bold text-xl px-10 py-5 rounded-xl hover:bg-orange-500 hover:scale-105 transition-all shadow-[0_0_30px_rgba(249,115,22,0.3)] relative z-10">
+                Book $1k Architecture Call
+            </a>
         </div>
     </div>
 
@@ -92,7 +111,6 @@
             e.preventDefault();
             
             let urlInput = document.getElementById('companyUrl').value.trim();
-            // Automatically insert https:// if missing
             if (!/^https?:\/\//i.test(urlInput)) {
                 urlInput = 'https://' + urlInput;
             }
@@ -106,20 +124,28 @@
             terminalText.innerHTML = '';
 
             appendLog(`> Validating URL formatting... targeting [${urlInput}]`);
-            appendLog(`> Spinning up Edge compute... bypassing cold start timeout limits.`);
+            appendLog(`> Spinning up Kimi K2.6 distributed cluster...`);
             
             setTimeout(() => {
-                appendLog("> Fetching DOM & extracting marketing pixel payloads...");
+                appendLog("> Agent 1: Fetching DOM & extracting marketing pixel payloads...");
                 statusSpan.textContent = "Scraping Site Data";
             }, 1000);
             
             setTimeout(() => {
-                appendLog("> Deploying Kimi/Haiku Agent Swarm... dividing workload into 3 parallel nodes to bypass latency...");
+                appendLog("> Deploying Moonshot K2.6 Agent Swarm...");
+                appendLog("> Agent 2: Parallel copy analysis initiated.");
+                appendLog("> Agent 3: Parallel tech stack scan initiated.");
                 statusSpan.textContent = "Swarm Deployed (Parallel LLM Execution)";
-            }, 2500);
+            }, 3000);
 
             try {
-                const response = await fetch('/api/audit', {
+                // Route directly to the Kimi Swarm server hosted on ngrok/local, NOT vercel edge functions
+                // (Note: in production this needs to be a real domain/IP mapping, but for local testing we point to localhost)
+                const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+                                ? 'http://localhost:3334' 
+                                : 'https://YOUR_NGROK_OR_IP.ngrok.io'; // Replace with your actual forwarding tunnel URL before sending to client
+                                
+                const response = await fetch(`${baseUrl}/api/audit`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ companyUrl: urlInput, revenueTier: revenue })
@@ -136,7 +162,7 @@
                     throw new Error(data.error);
                 }
                 
-                appendLog("> Swarm nodes successfully merged. Rendering financial impact map.");
+                appendLog("> Orchestrator: Swarm nodes successfully merged. Rendering financial impact map.");
 
                 document.getElementById('monthlyBleed').textContent = data.monthlyBleed || "$14,500";
                 
@@ -178,7 +204,7 @@
             } catch (err) {
                 appendLog(`> [FATAL] Swarm connection failed or timed out: ${err.message}`);
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Run Live Serverless Audit';
+                submitBtn.innerHTML = 'Run Live Distributed Swarm Audit';
                 hero.classList.remove('opacity-50', 'pointer-events-none');
             }
         });
