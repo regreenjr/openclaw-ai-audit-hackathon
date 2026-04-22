@@ -9,43 +9,50 @@ export default async function handler(req, res) {
         
         const tier = revenueTier || "$3-5M";
 
-        // Fix missing protocol inside the backend defensively incase 
-        // someone hits POST /api/audit raw through Postman
         if (!/^https?:\/\//i.test(companyUrl)) {
             companyUrl = 'https://' + companyUrl;
         }
 
-        // 1. Setup Abort Controller to prevent Vercel 10s Edge limits from locking the UI forever
+        // Increased scrape timeout to 12s
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000); // Fail fast scrape
+        const timeoutId = setTimeout(() => controller.abort(), 12000); 
 
         let html = '';
         try {
             const siteRes = await fetch(companyUrl, { 
-                headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36' },
+                headers: { 
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.9',
+                    'Connection': 'keep-alive',
+                    'Upgrade-Insecure-Requests': '1'
+                },
                 signal: controller.signal
             });
-            html = await siteRes.text();
+            
+            // Handle redirects or cloudflare waits gracefully instead of blind raw text dump
+            if (siteRes.status === 200) {
+                html = await siteRes.text();
+            } else {
+                console.warn(`Scrape returned ${siteRes.status} for ${companyUrl}`);
+                html = `HTTP ${siteRes.status} response.`;
+            }
             clearTimeout(timeoutId);
         } catch(fe) {
-            // Fail gracefully if site entirely blocks scraping, fallback to theoretical scores
             console.error("Scrape failed: ", fe.message);
             html = 'Homepage failed to load via automated scraper. Score purely on theoretical financial parameters.';
         }
 
-        // 2. Execute technical DOM footprint scraping
         const hasFacebookPixel = html.includes('fbevents.js') || html.includes('fbq(');
         const hasGTM = html.includes('googletagmanager.com') || html.includes('gtag(') || html.includes('analytics.js');
         const hasChatbot = html.includes('intercom') || html.includes('drift') || html.includes('podium') || html.includes('chat') || html.includes('widget');
         
-        // 3. Clean HTML for LLM payload (Aggressively truncate to save tokens & execution latency)
         const cleanText = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
                               .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
                               .replace(/<[^>]+>/g, ' ')
                               .replace(/\s+/g, ' ')
-                              .substring(0, 10000); // Reduced to 10k chars (speeds up inference by 30%)
+                              .substring(0, 10000); 
 
-        // 4. Construct prompt
         const prompt = `You are a ruthless 8-figure roofing marketing auditor. 
 Analyze this website's text and technical metadata to grade their sales/marketing infrastructure.
 The company is doing ${tier} in annual revenue.
@@ -69,7 +76,7 @@ ${cleanText}
 Based on their actual tech stack and copywriting, grade them brutally.
 Provide a JSON response with ONLY the following structure:
 {
-    "monthlyBleed": "[A formatted dollar amount between $8,000 and $45,000 depending on their revenue tier and how bad their tech stack is. Include the $ sign and commas]",
+    "monthlyBleed": "[A formatted dollar amount between $8,000 and $45,000. Calculate exactly 14% of their assumed ad spend plus Agency Retainer. Include the $ sign and commas]",
     "scores": {
         "Speed-to-Lead Velocity": [Score 1-5. 1 if no chatbot/fast booking.],
         "LSA & Cost-Per-Lead Efficiency": [Score 1-5 based on text detail and tracking tags.],
@@ -82,26 +89,23 @@ Provide a JSON response with ONLY the following structure:
 }
 Provide exactly 4 recommendations mapped to their lowest scores. Call out the "agency retainer" tax, the "LSA $250 CPL" trap, and pitch AI Voice Agents, SMS nurturing, and programmatic SEO. Return ONLY valid JSON.`;
 
-        // 5. Fire to Kimi K2.6 (Moonlight) instead of Gemini (faster token generation for this specific json extraction)
-        // OR fallback to Claude 3 Haiku for sheer unadulterated speed via OpenRouter
+        // Increased inference timeout to 20s
         const inferenceController = new AbortController();
-        const inferenceTimeout = setTimeout(() => inferenceController.abort(), 12000); // 12 seconds max inference
+        const inferenceTimeout = setTimeout(() => inferenceController.abort(), 20000); 
 
         const orRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
                 "Content-Type": "application/json",
-                // Ensure fast routing
                 "HTTP-Referer": "https://vercel.com",
                 "X-Title": "Audit Swarm"
             },
             signal: inferenceController.signal,
             body: JSON.stringify({
-                model: "anthropic/claude-3-haiku", // Changed to Haiku specifically for insane sub-2-second JSON latency. Gemini 3.1 Pro was overthinking
+                model: "anthropic/claude-3-haiku", 
                 messages: [{ role: "user", content: prompt }],
                 temperature: 0.1,
-                // Claude specific hint for raw JSON
                 system: "You output pure, unformatted JSON and absolutely nothing else. No markdown wrappers. Just { ... }" 
             })
         });
@@ -112,8 +116,6 @@ Provide exactly 4 recommendations mapped to their lowest scores. Call out the "a
         if (aiData.error) throw new Error(aiData.error.message || "OpenRouter Error");
 
         let resultText = aiData.choices[0].message.content;
-        
-        // Strip markdown backticks if Claude/Kimi accidentally added them
         resultText = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
 
         res.status(200).json(JSON.parse(resultText));
@@ -121,7 +123,7 @@ Provide exactly 4 recommendations mapped to their lowest scores. Call out the "a
     } catch (error) {
         console.error('Audit API Error:', error);
         
-        // Return a mock payload if the scraper or the LLM totally timed out instead of rendering a broken screen
+        // This only fires if Vercel serverless completely times out or Haiku dies
         res.status(200).json({
             monthlyBleed: "$18,500+",
             scores: {
